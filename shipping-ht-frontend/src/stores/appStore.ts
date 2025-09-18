@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 interface Shipper {
     name: string;
     code: string;
+    factorycode: string;
 }
 
 interface Order {

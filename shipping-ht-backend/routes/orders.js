@@ -6,8 +6,40 @@ router.get('/shippers', async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const result = await connection.execute('SELECT name, code FROM shipper');  // Provided SQL
-        res.json(result.rows.map(row => ({ name: row[0], code: row[1] })));
+        const result = await connection.execute(`
+            SELECT
+                P.FSECTCD,
+                P.FSECTLN,
+                P.FUPPSECT,
+                P.FSECTSN,
+                P.FEMAILADDR,
+                P.FVALIDDTE,
+                P.FINVALIDDTE,
+                '1' || substr(p.fuppsect, 2, 1) + 1 FFACTSITE
+            FROM SECTM P
+        `);
+
+
+        // const result = await connection.execute(`
+        //     SELECT
+        //         P.FSECTCD,
+        //         P.FSECTLN,
+        //         P.FUPPSECT,
+        //         S.FSECTSN,
+        //         P.FEMAILADDR,
+        //         P.FVALIDDTE,
+        //         P.FINVALIDDTE,
+        //         '1' || substr(p.fuppsect, 2, 1) + 1 FFACTSITE
+        //     FROM SECTM P
+        //     JOIN SECTM S 
+        //         ON S.FSECTCD = P.FUPPSECT
+        //     WHERE P.FUPPSECT LIKE '6_8000'
+        //     AND P.FINVALIDDTE > SYSDATE
+        //     ORDER BY FSECTCD DESC
+        // `);
+
+
+        res.json(result.rows.map(row => ({ name: row[0], code: row[1], factorycode: row[7] })));
     } catch (err) {
         res.status(500).json({ error: err.message });
     } finally {
@@ -19,26 +51,30 @@ router.get('/orders', async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const { filter, shipper } = req.query;
-
+        const { shipper } = req.query;
+        const binds = shipper;
+        console.log("ffactsite:", shipper);
         let sql = `
-      SELECT shippingno, grade, instructedqty, allocatedqty
-      FROM orders
-      WHERE 1=1
-    `;
-        const binds = {};
+            SELECT ZS.*,
+            0 AS FPOPPCS,
+            0 AS FPOPQTY
+            FROM ZSHPINS_V ZS
+            WHERE ZS.FINVSITE = :FFACTSITE
+            AND FSHPODRSTS IN ('R')
+            `;
+        const result = await connection.execute(sql, { FFACTSITE: shipper });
 
-        if (filter) {
-            sql += ` AND shippingno LIKE :filter`;
-            binds.filter = `${filter}%`;  // prefix match
-        }
+        // if (filter) {
+        //     sql += ` AND shippingno LIKE :filter`;
+        //     binds.filter = `${filter}%`;  // prefix match
+        // }
 
-        if (shipper) {
-            sql += ` AND name = :shipper`; // assuming you have a shipper column
-            binds.shipper = shipper;
-        }
+        // if (shipper) {
+        //     sql += ` AND name = :shipper`; // assuming you have a shipper column
+        //     binds.shipper = shipper;
+        // }
 
-        const result = await connection.execute(sql, binds);
+
         console.log(result);
         res.json(result.rows.map(row => ({
             shippingNo: row[0],

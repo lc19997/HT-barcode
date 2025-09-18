@@ -83,13 +83,12 @@ onBeforeUnmount(() => {
 
 const fetchOrders = async () => {
   try {
-    console.log("fetchOrders!!!");
+    console.log("factorycode:", store.selectedShipper?.factorycode);
     const res = await axios.get(
       `${import.meta.env.VITE_API_BASE_URL}/api/orders`,
       {
         params: {
-          filter: filter.value,
-          shipper: store.selectedShipper?.name,
+          shipper: store.selectedShipper?.factorycode,
         },
       }
     );

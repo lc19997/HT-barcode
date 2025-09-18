@@ -41,6 +41,7 @@ onMounted(async () => {
     shippers.value = response.data.map(item => ({
       name: item.name || 'Unnamed',
       code: item.code || 'N/A',
+      factorycode: item.factorycode || 'N/A',
     }));
   } catch (error) {
     console.error('Failed to fetch shippers:', error);
