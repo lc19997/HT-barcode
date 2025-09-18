@@ -1,2 +1,4 @@
 shipping-ht-backend/node_modules
 shipping-ht-frontend/node_modules
+shipping-ht-backend/.env
+shipping-ht-frontend/.env
