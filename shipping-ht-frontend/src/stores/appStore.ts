@@ -10,8 +10,9 @@ interface Shipper {
 interface Order {
     shippingNo: string;
     fgrade: string;
-    ffabricnum: number;
-    fpoppcs: number;
+    ffabricnum: string;
+    fpoppcs: string;
+    flotno: string;
 }
 
 export const useAppStore = defineStore('app', {

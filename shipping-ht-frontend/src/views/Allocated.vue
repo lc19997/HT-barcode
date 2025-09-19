@@ -7,28 +7,30 @@
       <button class="action-btn" @click="router.push('/summary')">集計</button>
     </header>
 
+    <!-- Lot / SubLot list -->
+    <ul v-if="barcodeDataList.length > 0" class="lot-list">
+      <li v-for="(item, idx) in barcodeDataList" :key="idx" class="lot-row">
+        <span class="check">✔</span>
+        <span class="lot">{{ item.lotNo }}-{{ item.subLotNo }}</span>
+        <span class="grade">{{ item.grade }}</span>
+        <span class="length">{{ item.length }}m</span>
+      </li>
+    </ul>
+
     <!-- Order Details -->
     <section class="order-info" v-if="order">
-      <div class="detail-row">在庫No: {{ order.stockNo || 'N/A' }}</div>
-      <div class="detail-row">加工No: {{ order.processNo || 'N/A' }}</div>
-      <div class="detail-row">等級: {{ order.grade || 'N/A' }}</div>
-      <div class="detail-row">反数: {{ order.qty || 'N/A' }}</div>
+      <div class="detail-row">在庫No: {{ order.flotno || 'N/A' }}</div>
+      <!-- <div class="detail-row">加工No: {{ order.processNo || 'N/A' }}</div> -->
+      <div class="detail-row">等級: {{ order.fgrade || 'N/A' }}</div>
+      <div class="detail-row">反数: {{ order.ffabricnum || 'N/A' }}</div>
     </section>
     <div v-else class="no-data">注文データがありません</div>
-
-    <!-- Barcode Input and Results -->
-    <div class="barcode-section" v-if="barcodeData">
-      <div class="detail-row">ロットNo: {{ barcodeData.lotNo }}</div>
-      <div class="detail-row">サブロットNo: {{ barcodeData.subLotNo }}</div>
-      <div class="detail-row">等級: {{ barcodeData.grade }}</div>
-      <div class="detail-row">長さ: {{ barcodeData.length }}m</div>
-    </div>
 
     <!-- Footer -->
     <footer class="footer">
       <input
         v-model="inputValue"
-        placeholder="バーコードをスキャン"
+        placeholder=""
         class="input-box"
         ref="input"
         @input="handleBarcodeInput"
@@ -47,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import axios from "axios";
@@ -61,9 +63,9 @@ const order = ref(null);
 const inputValue = ref("");
 const showTenkey = ref(false);
 const input = ref(null);
-const barcodeData = ref(null);
+const barcodeDataList = ref([]);
 
-let barcodeBuffer = ""; // Temporary buffer for scanned barcode
+let barcodeBuffer = "";
 let barcodeTimer = null;
 
 onMounted(() => {
@@ -95,7 +97,7 @@ const handleBarcodeInput = () => {
   if (barcodeTimer) clearTimeout(barcodeTimer);
   barcodeBuffer = inputValue.value;
   barcodeTimer = setTimeout(() => {
-    if (barcodeBuffer.length === 13) processBarcode();
+    if (barcodeBuffer.length === 13) processBarcode(barcodeBuffer);
     barcodeBuffer = "";
   }, 300);
 };
@@ -104,47 +106,85 @@ const handleGlobalBarcodeInput = (e) => {
   if (barcodeTimer) clearTimeout(barcodeTimer);
 
   if (e.key === "Enter" && barcodeBuffer.length === 13) {
-    inputValue.value = barcodeBuffer;
-    processBarcode();
+    processBarcode(barcodeBuffer);
     barcodeBuffer = "";
     return;
   }
-
   if (/^[0-9]$/.test(e.key)) {
     barcodeBuffer += e.key;
   }
-
   barcodeTimer = setTimeout(() => {
     barcodeBuffer = "";
   }, 300);
 };
 
-const processBarcode = async () => {
-  const barcode = inputValue.value.trim();
+// --- バーコード/入力値の処理 ---
+const processBarcode = async (raw) => {
+  const barcode = String(raw || inputValue.value || "").trim();
   if (barcode.length !== 13) {
-    alert("バーコードは13桁である必要があります。");
+    showError("バーコードは13桁である必要があります。");
     inputValue.value = "";
     return;
   }
 
+  const lotNo = barcode.slice(0, 10);
+  const subLotNo = barcode.slice(10, 13);
+
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/barcode/${barcode}`);
-    barcodeData.value = {
-      lotNo: barcode.slice(0, 7), // First 7 digits as lotNo
-      subLotNo: barcode.slice(7, 13), // Last 6 digits as subLotNo
-      grade: res.data.grade || 'A',
-      length: res.data.length || '4反'
-    };
-    inputValue.value = ""; // Clear input after processing
+    const res = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/api/barcode-data`,
+      {
+        params: {
+          lotNo,
+          subLotNo,
+          shippingNo: order.value.shippingNo,
+        },
+      }
+    );
+
+    if (!res.data) {
+      showError("データが見つかりませんでした。");
+      return;
+    }
+
+    // --- エラーチェック ---
+    if (order.value.flotno && order.value.flotno !== lotNo) {
+      showError("在庫Noが一致しません。");
+      return;
+    }
+
+    // 正常時 → リストに追加
+    barcodeDataList.value.push({
+      lotNo: res.data.FLOTNO,
+      subLotNo: res.data.FLOTNO2,
+      grade: res.data.FRANK,
+      length: res.data.FOHQTY,
+    });
+
+    inputValue.value = "";
+    showTenkey.value = false;
   } catch (err) {
     console.error("Failed to process barcode:", err);
-    alert("バーコードの処理に失敗しました。");
-    barcodeData.value = null;
+    showError("バーコードの処理に失敗しました。");
     inputValue.value = "";
   }
-  showTenkey.value = false;
+};
+
+// --- エラー処理（音＋バイブ） ---
+const showError = (msg) => {
+  alert(msg);
+
+  // アラート音
+  const audio = new Audio("/error.mp3");
+  audio.play().catch(() => {});
+
+  // バイブレーション
+  if (navigator.vibrate) {
+    navigator.vibrate([200, 100, 200]);
+  }
 };
 </script>
+
 
 <style scoped>
 .container {
