@@ -2,7 +2,7 @@
   <div class="container">
     <!-- Header -->
     <header class="nav-bar">
-      <button class="back-btn" @click="router.push('/orders')">← 出荷No.選択</button>
+      <button class="back-btn" @click="router.push('/orders')">&lt; 出荷No.選択</button>
       <h1 class="title">{{ order?.shippingNo }}</h1>
       <button class="action-btn" @click="router.push('/summary')">集計</button>
     </header>
@@ -204,7 +204,7 @@ const showError = (msg) => {
   height: 44px;
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
-  background-color: #f9f3f3;
+  background-color: #f8f9fa;
 }
 
 .title {
@@ -280,11 +280,18 @@ const showError = (msg) => {
   max-width: 375px;
   margin: 0 auto;
   display: flex;
+  justify-content: center; 
+  align-items: center;
   /* height: 48px; */
   padding: 8px;
   border-top: 1px solid #ddd;
-  background: #f9f9f9;
+  background: #f5f5f5;
   flex-shrink: 0;
+}
+
+.footer-container {
+  width: 150px;
+  position: relative;
 }
 
 .input-box {
@@ -294,16 +301,27 @@ const showError = (msg) => {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  width: 100%;
+}
+
+.input-box:focus,
+.input-box:focus-visible {
+  border-color: white;      /* white border on focus */
+  outline: white;
+  caret-color: #6486f6;         /* optional: caret color */
 }
 
 .keypad-btn {
+  position: absolute;
   margin-left: 8px;
   padding: 6px 12px;
   font-size: 14px;
   border: none;
-  background: #007aff;
-  color: #fff;
+  background: #f9f9f9;
+  color: #007aff;
   border-radius: 4px;
   box-sizing: border-box;
+  top: 1px;
+  right: -95px;
 }
 </style>
