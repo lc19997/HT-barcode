@@ -62,11 +62,14 @@ defineExpose({
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(85, 85, 85, 1);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  margin-top: 13px;
+  border-top-right-radius: 11px;
+  border-top-left-radius: 11px;
 }
 
 .tenkey-container {
@@ -98,11 +101,12 @@ defineExpose({
 .tenkey-btn {
   padding: 15px;
   font-size: 18px;
-  border: 1px solid #ccc;
+  border: 1px solid #fff;
   border-radius: 4px;
   background: #fff;
   cursor: pointer;
   transition: background 0.2s;
+  color: #4c9ff5;
 }
 
 .tenkey-btn:hover {
@@ -111,11 +115,11 @@ defineExpose({
 
 .delete {
   grid-column: span 1;
-  color: #d9534f;
+  color: #4c9ff5;
 }
 
 .enter {
   grid-column: span 1;
-  color: #5cb85c;
+  color: #4c9ff5;
 }
 </style>
