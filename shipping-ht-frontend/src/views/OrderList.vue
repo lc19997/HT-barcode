@@ -28,16 +28,19 @@
     <div v-else class="no-data">データがありません</div>
 
 
-    <!-- Footer with keypad -->
+    <!-- Footer with keypad 出荷No入力 -->
     <footer class="footer">
-      <input
-        v-model="filter"
-        placeholder="出荷No入力"
-        ref="input"
-        @input="fetchOrders"
-        class="filter-input"
-      />
-      <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
+      <div class="footer-container">
+        <input
+          name="filter"
+          v-model="filter"
+          placeholder=""
+          ref="input"
+          @input="fetchOrders"
+          class="filter-input"
+        />
+        <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
+      </div>
     </footer>
 
     <!-- Tenkey Pad -->
@@ -158,7 +161,7 @@ const goToAllocated = (order) => {
   height: 44px;
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
-  background-color: #f9f3f3;
+  background-color: #f8f9fa;
   position: relative;
 }
 
@@ -231,26 +234,42 @@ const goToAllocated = (order) => {
   max-width: 375px;
   margin: 0 auto;
   display: flex;
+  justify-content: center; 
+  align-items: center;
   padding: 8px;
   border-top: 1px solid #ddd;
-  background: #f9f9f9;
+  background: #f5f5f5;
+}
+
+.footer-container {
+  width: 150px;
+  position: relative;
 }
 
 
 .filter-input {
-  flex: 1;
   padding: 6px 8px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  width: 100%;
+}
+
+.filter-input:focus,
+.filter-input:focus-visible {
+  border-color: white;      /* white border on focus */
+  outline: white;
+  caret-color: #6486f6;         /* optional: caret color */
 }
 .keypad-btn {
-  margin-left: 8px;
+  position: absolute;
   padding: 6px 12px;
   font-size: 14px;
   border: none;
-  background: #007aff;
-  color: #fff;
+  background: #f9f9f9;
+  color: #007aff;
   border-radius: 4px;
+  top: 1px;
+  right: -95px;
 }
 </style>
