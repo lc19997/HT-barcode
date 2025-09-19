@@ -64,23 +64,13 @@ router.get('/orders', async (req, res) => {
             `;
         const result = await connection.execute(sql, { FFACTSITE: shipper });
 
-        // if (filter) {
-        //     sql += ` AND shippingno LIKE :filter`;
-        //     binds.filter = `${filter}%`;  // prefix match
-        // }
-
-        // if (shipper) {
-        //     sql += ` AND name = :shipper`; // assuming you have a shipper column
-        //     binds.shipper = shipper;
-        // }
-
-
-        console.log(result);
+        console.log(result.rows);
         res.json(result.rows.map(row => ({
             shippingNo: row[0],
-            grade: row[1],
-            instructedQty: row[2],
-            allocatedQty: row[3]
+            fgrade: row[64],
+            ffabricnum: row[65],
+            fpoppcs: row[69],
+            flotno: row[56]
         })));
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -89,6 +79,56 @@ router.get('/orders', async (req, res) => {
     }
 });
 
+router.get('/barcode-data', async (req, res) => {
+    const { lotNo, subLotNo, shippingNo } = req.query;
+    let connection;
+
+    if (!lotNo || !subLotNo || !shippingNo) {
+        return res.status(400).json({ error: "lotNo, subLotNo, shippingNo は必須です。" });
+    }
+
+    try {
+        connection = await getConnection();
+
+        let sql = `
+        SELECT 
+            ZI.*,
+            ZS.FSHPNO,
+            ZS.FINVSITE
+        FROM ZINVQTY_V ZI
+        JOIN ZSHPINS_V ZS 
+            ON ZS.FLOTNO = ZI.FLOTNO
+        AND ZS.FINVSITE = ZI.FINVSITE
+        WHERE ZI.FLOTNO  = :lotNo
+        AND ZI.FLOTNO2 = :subLotNo
+        AND ZS.FSHPNO  = :shippingNo
+            `;
+
+        const binds = {
+            lotNo: lotNo,           // e.g. first 10 digits from barcode
+            subLotNo: subLotNo,     // e.g. last 3 digits from barcode
+            shippingNo: shippingNo, // shipment number
+        };
+
+        const result = await connection.execute(sql, binds, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+
+        console.log(result.rows);
+        res.json(result.rows.map(row => ({
+            shippingNo: row[0],
+            fgrade: row[64],
+            ffabricnum: row[65],
+            fpoppcs: row[69],
+            flotno: row[56]
+        })));
+    } catch (err) {
+        console.error("DB error:", err);
+        res.status(500).json({ error: "DB処理に失敗しました。" });
+    } finally {
+        if (connection) {
+            try { await connection.close(); } catch (e) { }
+        }
+    }
+});
 
 // Add similar for /orders, /allocated, /save-allocation (INSERT)
 module.exports = router;
