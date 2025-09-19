@@ -9,9 +9,9 @@ interface Shipper {
 
 interface Order {
     shippingNo: string;
-    grade: string;
-    instructedQty: number;
-    allocatedQty: number;
+    fgrade: string;
+    ffabricnum: number;
+    fpoppcs: number;
 }
 
 export const useAppStore = defineStore('app', {

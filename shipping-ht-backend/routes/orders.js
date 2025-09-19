@@ -74,13 +74,12 @@ router.get('/orders', async (req, res) => {
         //     binds.shipper = shipper;
         // }
 
-
-        console.log(result);
+        console.log(result.rows);
         res.json(result.rows.map(row => ({
-            shippingNo: row[0],
-            grade: row[1],
-            instructedQty: row[2],
-            allocatedQty: row[3]
+            shippingNo: row[56],
+            fgrade: row[64],
+            ffbaricnum: row[65],
+            fpoppcs: row[69]
         })));
     } catch (err) {
         res.status(500).json({ error: err.message });

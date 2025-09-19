@@ -10,18 +10,18 @@
       <!-- <span class="username">{{ store.userName }}</span> -->
     </header>
 
-    <!-- Orders list -->
-    <ul v-if="orders.length > 0" class="order-list">
+    <!-- ✅ use filteredOrders -->
+    <ul v-if="filteredOrders.length > 0" class="order-list">
       <li
-        v-for="order in orders"
+        v-for="order in filteredOrders"
         :key="order.shippingNo"
         class="order-row"
         @click="goToAllocated(order)"
       >
         <span class="col shipping">{{ order.shippingNo }}</span>
-        <span class="col grade">{{ order.grade }}</span>
-        <span class="col instructed">{{ order.instructedQty }}</span>
-        <span class="col allocated">{{ order.allocatedQty }}</span>
+        <span class="col grade">{{ order.fgrade }}</span>
+        <span class="col instructed">{{ order.ffabricnum }}</span>
+        <span class="col allocated">{{ order.fpoppcs }}</span>
         <span class="arrow">&gt;</span>
       </li>
     </ul>
@@ -50,30 +50,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import axios from "axios";
 import TenkeyPad from "../components/TenkeyPad.vue";
 
 const filter = ref("");
-const orders = ref([]);
+const orders = ref([]);           // all orders from API
 const showTenkey = ref(false);
 const input = ref(null);
 const router = useRouter();
 const store = useAppStore();
 
-let barcodeBuffer = ""; // temporary buffer for scanned code
+let barcodeBuffer = "";
 let barcodeTimer = null;
 
-onMounted(() => {
+onMounted(async () => {
   if (!store.selectedShipper) router.push("/");
 
   // Focus input
   input.value.focus();
-  fetchOrders();
 
-  // Attach global keydown listener (for barcode scanners)
+  // ✅ fetch all orders once
+  await fetchOrders();
+
+  // Attach barcode listener
   window.addEventListener("keydown", handleBarcodeInput);
 });
 
@@ -83,48 +85,55 @@ onBeforeUnmount(() => {
 
 const fetchOrders = async () => {
   try {
-    console.log("factorycode:", store.selectedShipper?.factorycode);
     const res = await axios.get(
       `${import.meta.env.VITE_API_BASE_URL}/api/orders`,
       {
-        params: {
-          shipper: store.selectedShipper?.factorycode,
-        },
+        params: { shipper: store.selectedShipper?.factorycode },
       }
     );
     orders.value = res.data;
+    console.log(orders.value);
   } catch (err) {
     console.error("Failed to fetch orders:", err);
     orders.value = [];
   }
 };
 
-// handle manual filtering
+// ✅ computed for filtering orders in frontend
+const filteredOrders = computed(() => {
+  if (!filter.value) return orders.value;
+  const keyword = filter.value.toLowerCase();
+  return orders.value.filter(
+    (order) =>
+      order.shippingNo?.toString().includes(keyword) ||
+      order.fgrade?.toLowerCase().includes(keyword)
+  );
+});
+
+// handle keypad input
 const handleTenkeyInput = (value) => {
   filter.value += value;
-  fetchOrders();
   showTenkey.value = false;
 };
 
-// barcode scanning (keyboard wedge)
+// handle barcode input
 const handleBarcodeInput = (e) => {
   if (barcodeTimer) clearTimeout(barcodeTimer);
 
-  // If Enter pressed → treat as full barcode
-  if (barcodeBuffer.length > 9) {
-    console.log("Scanned barcode:", barcodeBuffer);
-    filter.value = barcodeBuffer;
-    fetchOrders();
-    barcodeBuffer = "";
+  if (e.key === "Enter") {
+    // when Enter is pressed, treat buffer as full barcode
+    if (barcodeBuffer.length > 0) {
+      filter.value = barcodeBuffer;
+      console.log("Scanned barcode:", barcodeBuffer);
+      barcodeBuffer = "";
+    }
     return;
   }
 
-  // Append key to buffer
   if (/^[0-9a-zA-Z]$/.test(e.key)) {
     barcodeBuffer += e.key;
   }
 
-  // Reset buffer if no input for 300ms (scanner usually types super fast)
   barcodeTimer = setTimeout(() => {
     barcodeBuffer = "";
   }, 300);
@@ -132,9 +141,8 @@ const handleBarcodeInput = (e) => {
 
 const goToAllocated = (order) => {
   store.currentOrder = order;
-  router.push(`/allocated/:${order.shippingNo}`);
+  router.push(`/allocated/${order.shippingNo}`);
 };
-
 </script>
 
 
