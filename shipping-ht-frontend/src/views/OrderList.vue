@@ -21,7 +21,7 @@
         <span class="col shipping">{{ order.shippingNo }}</span>
         <span class="col grade">{{ order.fgrade }}</span>
         <span class="col instructed">{{ order.ffabricnum }}</span>
-        <span class="col allocated">{{ order.fpoppcs }}</span>
+        <span class="col allocated">{{ order.fpoppcs || "0" }}</span>
         <span class="arrow">&gt;</span>
       </li>
     </ul>
@@ -74,9 +74,10 @@ onMounted(async () => {
 
   // ✅ fetch all orders once
   await fetchOrders();
-
-  // Attach barcode listener
-  window.addEventListener("keydown", handleBarcodeInput);
+  if (router.currentRoute.value.name === "OrderList") {
+    // Attach barcode listener
+    window.addEventListener("keydown", handleBarcodeInput);
+  }
 });
 
 onBeforeUnmount(() => {
@@ -105,8 +106,7 @@ const filteredOrders = computed(() => {
   const keyword = filter.value.toLowerCase();
   return orders.value.filter(
     (order) =>
-      order.shippingNo?.toString().includes(keyword) ||
-      order.fgrade?.toLowerCase().includes(keyword)
+      order.shippingNo?.toString().startsWith(keyword)
   );
 });
 
@@ -129,14 +129,16 @@ const handleBarcodeInput = (e) => {
     }
     return;
   }
+  
 
   if (/^[0-9a-zA-Z]$/.test(e.key)) {
     barcodeBuffer += e.key;
   }
+  console.log("Scanned barcode:", barcodeBuffer);
 
   barcodeTimer = setTimeout(() => {
     barcodeBuffer = "";
-  }, 300);
+  }, 30000);
 };
 
 const goToAllocated = (order) => {
