@@ -28,15 +28,17 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <input
-        v-model="inputValue"
-        placeholder=""
-        class="input-box"
-        ref="input"
-        @input="handleBarcodeInput"
-        @keypress.enter="processBarcode"
-      />
-      <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
+      <div class="footer-container">
+        <input
+          v-model="inputValue"
+          placeholder=""
+          class="input-box"
+          ref="input"
+          @input="handleBarcodeInput"
+          @keypress.enter="processBarcode"
+        />
+        <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
+      </div>
     </footer>
 
     <!-- Tenkey Pad -->
@@ -152,13 +154,14 @@ const processBarcode = async (raw) => {
       showError("在庫Noが一致しません。");
       return;
     }
+    console.log("responsive data:", res.data[0]);
 
     // 正常時 → リストに追加
     barcodeDataList.value.push({
-      lotNo: res.data.FLOTNO,
-      subLotNo: res.data.FLOTNO2,
-      grade: res.data.FRANK,
-      length: res.data.FOHQTY,
+      lotNo: res.data[0].FLOTNO,
+      subLotNo: res.data[0].FLOTNO2,
+      grade: res.data[0].FRANK,
+      length: res.data[0].FOHQTY,
     });
 
     inputValue.value = "";
@@ -182,6 +185,7 @@ const showError = (msg) => {
   if (navigator.vibrate) {
     navigator.vibrate([200, 100, 200]);
   }
+  showTenkey.value = false;
 };
 </script>
 

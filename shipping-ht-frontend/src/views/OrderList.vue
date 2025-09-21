@@ -78,7 +78,6 @@ onMounted(async () => {
   // ✅ fetch all orders once
   await fetchOrders();
   if (router.currentRoute.value.name === "OrderList") {
-    // Attach barcode listener
     window.addEventListener("keydown", handleBarcodeInput);
   }
 });

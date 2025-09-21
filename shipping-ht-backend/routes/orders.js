@@ -38,6 +38,8 @@ router.get('/shippers', async (req, res) => {
         //     ORDER BY FSECTCD DESC
         // `);
 
+        console.log(result);
+
 
         res.json(result.rows.map(row => ({ name: row[0], code: row[1], factorycode: row[7] })));
     } catch (err) {
@@ -110,15 +112,14 @@ router.get('/barcode-data', async (req, res) => {
             shippingNo: shippingNo, // shipment number
         };
 
-        const result = await connection.execute(sql, binds, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+        const result = await connection.execute(sql, binds);
 
         console.log(result.rows);
         res.json(result.rows.map(row => ({
-            shippingNo: row[0],
-            fgrade: row[64],
-            ffabricnum: row[65],
-            fpoppcs: row[69],
-            flotno: row[56]
+            FLOTNO: row[2],
+            FLOTNO2: row[3],
+            FRANK: row[4],
+            FOHQTY: row[7]
         })));
     } catch (err) {
         console.error("DB error:", err);

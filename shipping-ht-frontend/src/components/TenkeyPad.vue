@@ -27,10 +27,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from "vue";
 
-const displayValue = ref('');
-const emit = defineEmits(['enter', 'close']);
+const displayValue = ref("");
+const emit = defineEmits(["enter", "close"]);
 
 const appendNumber = (num) => {
   displayValue.value += num;
@@ -42,16 +42,38 @@ const deleteLast = () => {
 
 const handleEnter = () => {
   if (displayValue.value) {
-    emit('enter', displayValue.value);
-    displayValue.value = ''; // Clear after enter
+    emit("enter", displayValue.value);
+    displayValue.value = ""; // Clear after enter
   }
 };
 
+// ✅ Keyboard support
+const handleKeyDown = (e) => {
+  if (/^[0-9]$/.test(e.key)) {
+    appendNumber(e.key);
+  } else if (e.key === "Backspace") {
+    deleteLast();
+  } else if (e.key === "Enter") {
+    handleEnter();
+  } else if (e.key === "Escape") {
+    emit("close");
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
+
 defineExpose({
   close: () => {
-    displayValue.value = '';
-    emit('close');
-  }
+    displayValue.value = "";
+    window.removeEventListener("keydown", handleKeyDown);
+    emit("close");
+  },
 });
 </script>
 
