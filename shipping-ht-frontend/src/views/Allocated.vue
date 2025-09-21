@@ -175,17 +175,33 @@ const processBarcode = async (raw) => {
 
 // --- エラー処理（音＋バイブ） ---
 const showError = (msg) => {
-  alert(msg);
-
-  // アラート音
+    // アラート音
   const audio = new Audio("/error.mp3");
-  audio.play().catch(() => {});
+  audio.play().catch(() => {
+    console.log("⚠️ Audio play failed, playing beep instead");
+    playBeep();
+  });
 
   // バイブレーション
   if (navigator.vibrate) {
-    navigator.vibrate([200, 100, 200]);
+    const didVibrate = navigator.vibrate([200, 100, 200]);
+    console.log("✅ Vibrate triggered:", didVibrate);
+  } else {
+    console.log("❌ Vibrate not supported");
   }
+  alert(msg);
+
   showTenkey.value = false;
+};
+
+const playBeep = () => {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  osc.type = "square"; // beep type
+  osc.frequency.value = 440; // Hz (A4 note)
+  osc.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.3); // play 0.2 sec
 };
 </script>
 
@@ -328,4 +344,59 @@ const showError = (msg) => {
   top: 1px;
   right: -95px;
 }
+
+.lot-list {
+  list-style: none;         /* remove front dots */
+  padding: 0;
+  margin: 16px 0;
+  /* border: 1px solid #e0e0e0;
+  border-radius: 8px; */
+  overflow: hidden;
+}
+
+.lot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  background: #fff;
+  transition: background 0.2s;
+}
+
+.lot-row:last-child {
+  border-bottom: none;
+}
+
+/* .lot-row:hover {
+  background: #f9f9f9;
+} */
+
+.check {
+  color: #4caf50;           /* green check */
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.lot {
+  flex: 2;
+  font-weight: 600;
+  color: #333;
+}
+
+.grade {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
+  color: #000000;           /* blue for grade */
+}
+
+.length {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+  color: #555;
+}
+
 </style>
