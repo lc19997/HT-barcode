@@ -1,22 +1,13 @@
-<template>
+<!-- <template>
   <div class="app-container">
-    <!-- Header with App Title -->
-    <!-- <header class="app-header">
-      <h1>出荷用HT仕様</h1>
-      <p class="date">2025.08.23</p>
-    </header> -->
 
-    <!-- Router View for Dynamic Content -->
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
         <component :is="Component" />
       </transition>
     </router-view>
 
-    <!-- Optional Footer or Navigation (if needed later) -->
-    <!-- <footer class="app-footer">
-      <button @click="$router.push('/')">Home</button>
-    </footer> -->
+  
   </div>
 </template>
 
@@ -80,14 +71,14 @@ onMounted(() => {
   opacity: 0;
 }
 
-/* Hide footer for now, enable if navigation buttons are added */
+
 .app-footer {
   position: sticky;
   bottom: 0;
   background-color: #007aff;
   padding: 10px;
   text-align: center;
-  display: none; /* Hidden until needed */
+  display: none; 
 }
 
 .app-footer button {
@@ -101,4 +92,12 @@ onMounted(() => {
 .app-footer button:hover {
   background-color: #e0e0e0;
 }
-</style>
+</style> -->
+
+<template>
+  <ShowErrorTest />
+</template>
+
+<script setup>
+import ShowErrorTest from "./components/ShowErrorTest.vue";
+</script>
