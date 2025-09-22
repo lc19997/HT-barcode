@@ -27,50 +27,57 @@ export default {
       switchState: false,
     };
   },
-  methods: {
-      triggerVibration() {
-      this.playBeep();
-      if ("vibrate" in navigator) {
-        // Standard vibration API
-        const didVibrate = navigator.vibrate([200, 100, 200]);
-        console.log("✅ Vibrate triggered:", didVibrate);
-      } else {
-        console.log("❌ Vibrate not supported. Trying iOS workaround...");
+    methods: {
+        triggerVibration() {
+            this.playBeep();
+            if ("vibrate" in navigator) {
+                // Standard vibration API
+                const didVibrate = navigator.vibrate([200, 100, 200]);
+                console.log("✅ Vibrate triggered:", didVibrate);
+            } else {
+                console.log("❌ Vibrate not supported. Trying iOS workaround...");
 
-        // Force toggle the switch input (iOS 18 haptic)
-        this.switchState = !this.switchState;
+                // Force toggle the switch input (iOS 18 haptic)
+                this.switchState = !this.switchState;
 
-        // Fallback beep if no haptic
-        
-      }
+                // Fallback beep if no haptic
+
+            }
+        },
+        onSwitchChanged() {
+            console.log("iOS switch toggled → haptic feedback (if iOS 18+).");
+        },
+        playErrorBeep() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+            const playTone = (freq, start, duration) => {
+                const osc = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                osc.type = "sine";        // smoother sound
+                osc.frequency.value = freq;
+
+                // fade out to avoid clicks
+                gainNode.gain.setValueAtTime(1, ctx.currentTime + start);
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.001,
+                    ctx.currentTime + start + duration
+                );
+
+                osc.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                osc.start(ctx.currentTime + start);
+                osc.stop(ctx.currentTime + start + duration);
+            };
+
+            // Two short tones: 800Hz then 500Hz
+            playTone(800, 0, 0.15);
+            playTone(500, 0.18, 0.15);
+
+            // Auto close after ~0.4s
+            setTimeout(() => ctx.close(), 500);
+        },
     },
-    onSwitchChanged() {
-      console.log("iOS switch toggled → haptic feedback (if iOS 18+).");
-    },
-    playBeep() {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      // Oscillator setup
-      osc.type = "square";
-      osc.frequency.value = 640; // Hz (A4)
-
-      // Smooth fade out to prevent double-beep effect
-      gainNode.gain.setValueAtTime(1, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-
-      // Connect oscillator → gain → destination
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      // Start/stop
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.3);
-
-      // Clean up
-      osc.onended = () => ctx.close();
-    }
-  },
 };
 </script>
