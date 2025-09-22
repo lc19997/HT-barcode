@@ -28,7 +28,8 @@ export default {
     };
   },
   methods: {
-    triggerVibration() {
+      triggerVibration() {
+      this.playBeep();
       if ("vibrate" in navigator) {
         // Standard vibration API
         const didVibrate = navigator.vibrate([200, 100, 200]);
@@ -36,13 +37,40 @@ export default {
       } else {
         console.log("❌ Vibrate not supported. Trying iOS workaround...");
 
-        // Force toggle the switch input to produce haptic on iOS 18
+        // Force toggle the switch input (iOS 18 haptic)
         this.switchState = !this.switchState;
+
+        // Fallback beep if no haptic
+        
       }
     },
     onSwitchChanged() {
       console.log("iOS switch toggled → haptic feedback (if iOS 18+).");
     },
+    playBeep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      // Oscillator setup
+      osc.type = "square";
+      osc.frequency.value = 440; // Hz (A4)
+
+      // Smooth fade out to prevent double-beep effect
+      gainNode.gain.setValueAtTime(1, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+
+      // Connect oscillator → gain → destination
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      // Start/stop
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+
+      // Clean up
+      osc.onended = () => ctx.close();
+    }
   },
 };
 </script>
