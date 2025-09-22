@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <div class="app-container">
 
     <router-view v-slot="{ Component }">
@@ -20,12 +20,16 @@ const router = useRouter();
 const store = useAppStore();
 
 // Auto-navigate to Order List if shipper is in cookie
-onMounted(() => {
-  store.loadShipper(); // Load from cookie
-  if (store.selectedShipper && router.currentRoute.value.path === '/') {
+onMounted(async () => {
+  await store.loadShipper(); // wait until shipper is loaded
+  console.log(store.selectedShipper.name);
+
+  if (store.selectedShipper.name && router.currentRoute.value.path === '/') {
+    console.log("page tensyokuy");
     router.push('/orders');
   }
 });
+
 </script>
 
 <style scoped>
@@ -92,12 +96,12 @@ onMounted(() => {
 .app-footer button:hover {
   background-color: #e0e0e0;
 }
-</style> -->
+</style>
 
-<template>
+<!-- <template>
   <ShowErrorTest />
 </template>
 
 <script setup>
 import ShowErrorTest from "./components/ShowErrorTest.vue";
-</script>
+</script> -->

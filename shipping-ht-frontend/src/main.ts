@@ -12,8 +12,8 @@ app.mount('#app');
 
 // Check cookie after mount
 router.isReady().then(() => {
-    // const store = useAppStore();
-    // if (store.loadShipper() && router.currentRoute.value.path === '/') {
-    router.push('/');
-    // }
+    const store = useAppStore();
+    if (store.loadShipper() && router.currentRoute.value.path === '/') {
+        router.push('/');
+    }
 });

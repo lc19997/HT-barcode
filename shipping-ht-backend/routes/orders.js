@@ -53,28 +53,45 @@ router.get('/orders', async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const { shipper } = req.query;
-        const binds = shipper;
-        console.log("ffactsite:", shipper);
+        const { shipper, keyword } = req.query;
+
+        console.log("ffactsite:", shipper, "filter:", keyword);
+
+        // ✅ base SQL
         let sql = `
             SELECT ZS.*,
-            0 AS FPOPPCS,
-            0 AS FPOPQTY
+                   0 AS FPOPPCS,
+                   0 AS FPOPQTY
             FROM ZSHPINS_V ZS
             WHERE ZS.FINVSITE = :FFACTSITE
-            AND FSHPODRSTS IN ('R')
-            `;
-        const result = await connection.execute(sql, { FFACTSITE: shipper });
+              AND FSHPODRSTS IN ('R')
+        `;
 
-        console.log(result.rows);
+        // ✅ add filter condition if keyword provided
+        if (keyword && keyword.trim() !== "") {
+            sql += ` AND ZS.FSHPNO LIKE :FILTER`;
+        }
+
+        // ✅ bind values
+        const binds = { FFACTSITE: shipper };
+        if (keyword && keyword.trim() !== "") {
+            binds.FILTER = `${keyword}%`; // starts with
+        }
+
+        const result = await connection.execute(sql, binds);
+
+        console.log("rows:", result.rows.length);
+
         res.json(result.rows.map(row => ({
-            shippingNo: row[0],
-            fgrade: row[64],
+            shippingNo: row[0],   // FSHPNO
+            fgrade: row[64],      // check column index mapping
             ffabricnum: row[65],
             fpoppcs: row[69],
             flotno: row[56]
         })));
+
     } catch (err) {
+        console.error("DB error:", err);
         res.status(500).json({ error: err.message });
     } finally {
         if (connection) await connection.close();
