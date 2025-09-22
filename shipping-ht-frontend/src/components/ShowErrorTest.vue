@@ -18,7 +18,8 @@ export default {
   },
   methods: {
     triggerVibration() {
-      this.playBeep(); // always beep on click
+          this.playBeep(); // always beep on click
+      this.shakeFallback();
 
       if ("vibrate" in navigator) {
         // Standard vibration API (Android, some browsers)
