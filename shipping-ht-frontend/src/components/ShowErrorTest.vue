@@ -47,7 +47,7 @@ export default {
         onSwitchChanged() {
             console.log("iOS switch toggled → haptic feedback (if iOS 18+).");
         },
-        playErrorBeep() {
+        playBeep() {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
 
             const playTone = (freq, start, duration) => {
