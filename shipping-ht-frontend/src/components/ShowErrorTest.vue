@@ -1,60 +1,48 @@
 <template>
-  <div class="test">
-    <h1>showError Test (Vue)</h1>
-    <button @click="triggerError">Trigger Error</button>
+  <div class="p-4">
+    <!-- Normal vibration trigger button -->
+    <button
+      class="px-4 py-2 bg-blue-500 text-white rounded-lg"
+      @click="triggerVibration"
+    >
+      Vibrate (if supported)
+    </button>
+
+    <!-- iOS 18 workaround: hidden switch toggle -->
+    <input
+      id="ios-switch"
+      type="checkbox"
+      switch
+      v-model="switchState"
+      @change="onSwitchChanged"
+      class="hidden"
+    />
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue";
+<script>
+export default {
+  data() {
+    return {
+      switchState: false,
+    };
+  },
+  methods: {
+    triggerVibration() {
+      if ("vibrate" in navigator) {
+        // Standard vibration API
+        const didVibrate = navigator.vibrate([200, 100, 200]);
+        console.log("✅ Vibrate triggered:", didVibrate);
+      } else {
+        console.log("❌ Vibrate not supported. Trying iOS workaround...");
 
-const showTenkey = ref(true);
-
-const playBeep = () => {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "square";
-  osc.frequency.setValueAtTime(440, ctx.currentTime); // A4
-  gain.gain.setValueAtTime(0.2, ctx.currentTime);
-  osc.connect(gain).connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.3);
-};
-
-const showError = (msg) => {
-  // アラート音
-  const audio = new Audio("/error.mp3");
-  audio.play().catch(() => {
-    console.log("⚠️ Audio play failed, playing beep instead");
-    playBeep();
-  });
-
-  // バイブレーション
-  if (navigator.vibrate) {
-    const didVibrate = navigator.vibrate([200, 100, 200]);
-    console.log("✅ Vibrate triggered:", didVibrate);
-  } else {
-    console.log("❌ Vibrate not supported");
-  }
-
-  alert(msg);
-  showTenkey.value = false;
-};
-
-const triggerError = () => {
-  showError("テストエラー発生！");
+        // Force toggle the switch input to produce haptic on iOS 18
+        this.switchState = !this.switchState;
+      }
+    },
+    onSwitchChanged() {
+      console.log("iOS switch toggled → haptic feedback (if iOS 18+).");
+    },
+  },
 };
 </script>
-
-<style scoped>
-.test {
-  padding: 20px;
-  font-family: sans-serif;
-}
-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-}
-</style>
