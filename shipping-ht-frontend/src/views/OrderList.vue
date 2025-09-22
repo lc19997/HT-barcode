@@ -7,14 +7,13 @@
       <div class="username" @click="router.push('/')">
         {{ store.selectedShipper?.name || '' }}
       </div>
-      <!-- <span class="username">{{ store.userName }}</span> -->
     </header>
 
-    <!-- ✅ use filteredOrders -->
-    <ul v-if="filteredOrders.length > 0" class="order-list">
+    <!-- ✅ directly render orders (already filtered by backend) -->
+    <ul v-if="orders.length > 0" class="order-list" >
       <li
-        v-for="order in filteredOrders"
-        :key="order.shippingNo"
+        v-for="(order, index) in orders"
+        :key="order.shippingNo + '-' + index"
         class="order-row"
         @click="goToAllocated(order)"
       >
@@ -27,17 +26,16 @@
     </ul>
     <div v-else class="no-data">データがありません</div>
 
-
     <!-- Footer with keypad 出荷No入力 -->
     <footer class="footer">
       <div class="footer-container">
         <input
           name="filter"
           v-model="filter"
-          placeholder=""
           ref="input"
-          @input="fetchOrders"
           class="filter-input"
+          placeholder=""
+          @input="fetchOrders"   
         />
         <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
       </div>
@@ -53,14 +51,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import axios from "axios";
 import TenkeyPad from "../components/TenkeyPad.vue";
 
 const filter = ref("");
-const orders = ref([]);           // all orders from API
+const orders = ref([]);           // ✅ only filtered data from backend
 const showTenkey = ref(false);
 const input = ref(null);
 const router = useRouter();
@@ -75,8 +73,9 @@ onMounted(async () => {
   // Focus input
   input.value.focus();
 
-  // ✅ fetch all orders once
+  // ✅ fetch first page (all orders or filtered by empty keyword)
   await fetchOrders();
+
   if (router.currentRoute.value.name === "OrderList") {
     window.addEventListener("keydown", handleBarcodeInput);
   }
@@ -86,68 +85,64 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleBarcodeInput);
 });
 
+// ✅ now filtering happens on backend
 const fetchOrders = async () => {
   try {
     const res = await axios.get(
       `${import.meta.env.VITE_API_BASE_URL}/api/orders`,
       {
-        params: { shipper: store.selectedShipper?.factorycode },
+        params: {
+          shipper: store.selectedShipper?.factorycode,
+          keyword: filter.value || "",  // send filter keyword to backend
+        },
       }
     );
-    orders.value = res.data;
-    console.log(orders.value);
+    orders.value = [...res.data];
+     console.log("Fetched orders:", orders.value);
   } catch (err) {
-    console.error("Failed to fetch orders:", err);
+    console.error("Failed to fetch orders:", err);18
     orders.value = [];
   }
 };
-
-// ✅ computed for filtering orders in frontend
-const filteredOrders = computed(() => {
-  if (!filter.value) return orders.value;
-  const keyword = filter.value.toLowerCase();
-  return orders.value.filter(
-    (order) =>
-      order.shippingNo?.toString().startsWith(keyword)
-  );
-});
 
 // handle keypad input
 const handleTenkeyInput = (value) => {
   filter.value += value;
   showTenkey.value = false;
-};
+  fetchOrders();   // fetch again when keypad used
+}  
 
 // handle barcode input
 const handleBarcodeInput = (e) => {
   if (barcodeTimer) clearTimeout(barcodeTimer);
 
-  if (e.key === "Enter") {
-    // when Enter is pressed, treat buffer as full barcode
+  if ((e.key === "Enter" && barcodeBuffer.length === 10)) {
     if (barcodeBuffer.length > 0) {
       filter.value = barcodeBuffer;
       console.log("Scanned barcode:", barcodeBuffer);
+      fetchOrders();   // fetch from backend with scanned code
       barcodeBuffer = "";
     }
     return;
   }
-  
 
   if (/^[0-9a-zA-Z]$/.test(e.key)) {
     barcodeBuffer += e.key;
   }
-  console.log("Scanned barcode:", barcodeBuffer);
+  console.log("barcode:", barcodeBuffer);
 
   barcodeTimer = setTimeout(() => {
     barcodeBuffer = "";
-  }, 30000);
+  }, 3000);
 };
 
+// navigate to allocated page
 const goToAllocated = (order) => {
   store.currentOrder = order;
   router.push(`/allocated/${order.shippingNo}`);
 };
 </script>
+
 
 
 <style scoped>

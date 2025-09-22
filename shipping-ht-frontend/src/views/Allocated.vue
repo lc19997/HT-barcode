@@ -11,7 +11,7 @@
     <ul v-if="barcodeDataList.length > 0" class="lot-list">
       <li v-for="(item, idx) in barcodeDataList" :key="idx" class="lot-row">
         <span class="check">✔</span>
-        <span class="lot">{{ item.lotNo }}-{{ item.subLotNo }}</span>
+        <span class="lot">{{ item.lotNo }}-{{ String(item.subLotNo).padStart(3, '0') }}</span>
         <span class="grade">{{ item.grade }}</span>
         <span class="length">{{ item.length }}m</span>
       </li>
@@ -163,6 +163,12 @@ const processBarcode = async (raw) => {
       grade: res.data[0].FRANK,
       length: res.data[0].FOHQTY,
     });
+    store.addBarcodeDataList({
+      lotNo: res.data[0].FLOTNO,
+      subLotNo: res.data[0].FLOTNO2,
+      grade: res.data[0].FRANK,
+      length: res.data[0].FOHQTY,
+    });
 
     inputValue.value = "";
     showTenkey.value = false;
@@ -173,35 +179,61 @@ const processBarcode = async (raw) => {
   }
 };
 
-// --- エラー処理（音＋バイブ） ---
+// --- エラー処理（音＋バイブ + シェイク） ---
 const showError = (msg) => {
-    // アラート音
-  const audio = new Audio("/error.mp3");
-  audio.play().catch(() => {
-    console.log("⚠️ Audio play failed, playing beep instead");
-    playBeep();
-  });
+  playBeep(); // always beep
+  triggerVibration(); // vibration or shake fallback
+  alert(msg);
+  showTenkey.value = false;
+};
 
-  // バイブレーション
-  if (navigator.vibrate) {
+// --- vibration + fallback ---
+const triggerVibration = () => {
+  if ("vibrate" in navigator) {
     const didVibrate = navigator.vibrate([200, 100, 200]);
     console.log("✅ Vibrate triggered:", didVibrate);
   } else {
-    console.log("❌ Vibrate not supported");
+    console.log("❌ Vibrate not supported. Using shake fallback...");
+    shakeFallback();
   }
-  alert(msg);
+};
 
-  showTenkey.value = false;
+// --- shake fallback animation ---
+const shakeFallback = () => {
+  const el = input.value || document.body; // shake the input box if exists
+  el.classList.add("shake");
+  setTimeout(() => el.classList.remove("shake"), 400);
 };
 
 const playBeep = () => {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  osc.type = "square"; // beep type
-  osc.frequency.value = 440; // Hz (A4 note)
-  osc.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.3); // play 0.2 sec
+
+  const playTone = (freq, start, duration) => {
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc.type = "sine"; // smoother error tone
+    osc.frequency.value = freq;
+
+    // fade out
+    gainNode.gain.setValueAtTime(1, ctx.currentTime + start);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      ctx.currentTime + start + duration
+    );
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(ctx.currentTime + start);
+    osc.stop(ctx.currentTime + start + duration);
+  };
+
+  // Error-like sound: high → low beep
+  playTone(800, 0, 0.15);
+  playTone(500, 0.18, 0.15);
+
+  setTimeout(() => ctx.close(), 500);
 };
 </script>
 
@@ -269,7 +301,7 @@ const playBeep = () => {
 
 .order-info,
 .barcode-section {
-  padding: 12px;
+  padding: 8px 12px;
   font-size: 14px;
   flex: 1;
   overflow-y: auto;
@@ -278,7 +310,7 @@ const playBeep = () => {
 .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px 0;
+  padding: 8px 0;
   border-bottom: 1px solid #eee;
 }
 
@@ -348,7 +380,7 @@ const playBeep = () => {
 .lot-list {
   list-style: none;         /* remove front dots */
   padding: 0;
-  margin: 16px 0;
+  margin: 8px 0;
   /* border: 1px solid #e0e0e0;
   border-radius: 8px; */
   overflow: hidden;
@@ -358,7 +390,7 @@ const playBeep = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 8px 16px;
   border-bottom: 1px solid #f0f0f0;
   font-size: 14px;
   background: #fff;
@@ -398,5 +430,19 @@ const playBeep = () => {
   font-weight: 500;
   color: #555;
 }
+
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-7px); }
+  40%  { transform: translateX(5px); }
+  60%  { transform: translateX(-3px); }
+  80%  { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
 
 </style>
