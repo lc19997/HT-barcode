@@ -15,11 +15,27 @@ interface Order {
     flotno: string;
 }
 
+interface Order {
+    shippingNo: string;
+    fgrade: string;
+    ffabricnum: string;
+    fpoppcs: string;
+    flotno: string;
+}
+
+interface Barcode {
+    lotNo: string;
+    subLotNo: string;
+    grade: string;
+    length: number;
+}
+
 export const useAppStore = defineStore('app', {
     state: () => ({
         selectedShipper: null as Shipper | null,
         currentOrder: null as Order | null,
         allocatedItems: [] as Order[],
+        barcodeDataList: [] as Barcode[],
     }),
     actions: {
         setShipper(shipper: Shipper) {
@@ -45,6 +61,9 @@ export const useAppStore = defineStore('app', {
         },
         addAllocatedItem(item: Order) {
             this.allocatedItems.push(item);
+        },
+        addBarcodeDataList(item: Barcode) {
+            this.barcodeDataList.push(item);
         },
     },
 });

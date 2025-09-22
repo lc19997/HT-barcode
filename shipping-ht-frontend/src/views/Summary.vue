@@ -26,9 +26,10 @@
             :key="grade.grade"
             class="summary-row grade"
           >
-            <td>{{ grade.grade }}</td>
-            <td>{{ grade.count }}</td>
-            <td>{{ grade.length }}</td>
+            <td>{{store.currentOrder?.flotno }}</td>
+            <td>{{ store.currentOrder?.fgrade }}</td>
+            <td>{{ store.currentOrder?.fpoppcs }}</td>
+            <td>{{ store.currentOrder?.ffabricnum }}</td>
           </tr>
 
           <!-- 等級 + 長さごと -->
@@ -37,8 +38,8 @@
             :key="item.grade + '-' + item.length"
             class="summary-row detail"
           >
-            <td>{{ item.grade }} {{ item.length }}</td>
-            <td>{{ item.count }}</td>
+            <td>{{ store.barcodeDataList?.grade }} {{ store.barcodeDataList?.length }}</td>
+            <td>{{ store.barcodeDataList?.p }}</td>
             <td>{{ item.total }}</td>
           </tr>
         </tbody>
@@ -61,46 +62,26 @@ import axios from "axios";
 const router = useRouter();
 const store = useAppStore();
 
-// Suppose store.currentOrder has `allocations` data
-// Example: [{ grade: 'A', length: 514, count: 1 }, ...]
-const allocations = store.currentOrder?.allocations || [];
-
-// --- Computed summaries ---
-const totalRecords = computed(() =>
-  allocations.reduce((sum, row) => sum + row.count, 0)
+// --- 集計データ ---
+const totalQty = computed(() =>
+  store.barcodeDataList?.reduce((sum, item) => sum + 1, 0) || 0
 );
 
 const totalLength = computed(() =>
-  allocations.reduce((sum, row) => sum + row.length * row.count, 0)
+  store.barcodeDataList?.reduce((sum, item) => sum + item.length, 0)
 );
 
-const groupedByGrade = computed(() => {
-  const map = {};
-  allocations.forEach((row) => {
-    if (!map[row.grade]) {
-      map[row.grade] = { grade: row.grade, count: 0, length: 0 };
-    }
-    map[row.grade].count += row.count;
-    map[row.grade].length += row.length * row.count;
-  });
-  return Object.values(map);
-});
-
-const groupedByGradeLength = computed(() => {
-  const map = {};
-  allocations.forEach((row) => {
-    const key = `${row.grade}-${row.length}`;
+// --- グループ化（例: lotNoごと / gradeごと） ---
+const groupedByLot = computed(() => {
+  const map = {}; // no type annotation
+  for (const item of store.barcodeDataList) {
+    const key = item.lotNo + "-" + item.grade;
     if (!map[key]) {
-      map[key] = {
-        grade: row.grade,
-        length: row.length,
-        count: 0,
-        total: 0,
-      };
+      map[key] = { lotNo: item.lotNo, grade: item.grade, count: 0, length: 0 };
     }
-    map[key].count += row.count;
-    map[key].total += row.length * row.count;
-  });
+    map[key].count++;
+    map[key].length += item.length;
+  }
   return Object.values(map);
 });
 
