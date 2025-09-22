@@ -54,11 +54,11 @@ export default {
 
       // Oscillator setup
       osc.type = "square";
-      osc.frequency.value = 440; // Hz (A4)
+      osc.frequency.value = 640; // Hz (A4)
 
       // Smooth fade out to prevent double-beep effect
       gainNode.gain.setValueAtTime(1, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
 
       // Connect oscillator → gain → destination
       osc.connect(gainNode);
@@ -66,7 +66,7 @@ export default {
 
       // Start/stop
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.2);
+      osc.stop(ctx.currentTime + 0.3);
 
       // Clean up
       osc.onended = () => ctx.close();
