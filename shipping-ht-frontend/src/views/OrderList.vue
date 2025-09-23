@@ -169,6 +169,10 @@ const goToAllocated = (order) => {
   position: relative;
 }
 
+.order-list {
+  -webkit-overflow-scrolling: touch;
+}
+
 .title {
   position: absolute;
   left: 50%;

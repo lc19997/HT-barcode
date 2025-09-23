@@ -431,6 +431,11 @@ const playBeep = () => {
   color: #555;
 }
 
+.footer {
+  bottom: env(safe-area-inset-bottom); /* handles iPhone notch */
+}
+
+
 @keyframes shake {
   0%   { transform: translateX(0); }
   20%  { transform: translateX(-7px); }

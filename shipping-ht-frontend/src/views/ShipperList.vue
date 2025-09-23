@@ -96,6 +96,11 @@ const goSummary = () => {
 }
 
 .nav-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.nav-button {
   font-size: 15px;
   color: #007aff;
   background: none;

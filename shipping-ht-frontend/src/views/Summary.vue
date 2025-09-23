@@ -16,14 +16,13 @@
           <!-- 合計 -->
           <tr class="summary-row total">
             <td>合計</td>
+            <td></td>
             <td>{{ totalRecords }}</td>
             <td>{{ totalLength }}</td>
           </tr>
 
           <!-- 等級ごと -->
           <tr
-            v-for="grade in groupedByGrade"
-            :key="grade.grade"
             class="summary-row grade"
           >
             <td>{{store.currentOrder?.flotno }}</td>
@@ -34,13 +33,14 @@
 
           <!-- 等級 + 長さごと -->
           <tr
-            v-for="item in groupedByGradeLength"
-            :key="item.grade + '-' + item.length"
+            v-for="(barcodeData, index) in store.barcodeDataList"
+            :key="barcodeData.grade + '-' + index"
             class="summary-row detail"
           >
-            <td>{{ store.barcodeDataList?.grade }} {{ store.barcodeDataList?.length }}</td>
-            <td>{{ store.barcodeDataList?.p }}</td>
-            <td>{{ item.total }}</td>
+            <td></td>
+            <td>{{ barcodeData?.grade }} {{ barcodeData?.length }}</td>
+            <td>{{ barcodeData?.grade }}</td>
+            <td>{{ barcodeData?.length }}</td>
           </tr>
         </tbody>
       </table>
@@ -183,4 +183,14 @@ const saveData = async () => {
   border: none;
   border-radius: 6px;
 }
+
+/* Footer */
+.summary-table td {
+  white-space: nowrap;
+  text-align: center;
+}
+.summary-table td:first-child {
+  text-align: left;
+}
+
 </style>
