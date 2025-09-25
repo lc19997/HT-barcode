@@ -35,7 +35,7 @@
           ref="input"
           class="filter-input"
           placeholder=""
-          @input="fetchOrders"   
+          @keydown.enter.prevent="fetchOrders"  
         />
         <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
       </div>
@@ -107,7 +107,7 @@ const fetchOrders = async () => {
 
 // handle keypad input
 const handleTenkeyInput = (value) => {
-  filter.value += value;
+  filter.value = value;
   showTenkey.value = false;
   fetchOrders();   // fetch again when keypad used
 }  
@@ -116,7 +116,7 @@ const handleTenkeyInput = (value) => {
 const handleBarcodeInput = (e) => {
   if (barcodeTimer) clearTimeout(barcodeTimer);
 
-  if ((e.key === "Enter" && barcodeBuffer.length === 10)) {
+  if ((e.key === "Enter" && barcodeBuffer.length > 0 )) {
     if (barcodeBuffer.length > 0) {
       filter.value = barcodeBuffer;
       console.log("Scanned barcode:", barcodeBuffer);
