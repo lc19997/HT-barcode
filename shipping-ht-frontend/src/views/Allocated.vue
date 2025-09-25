@@ -162,12 +162,14 @@ const processBarcode = async (raw) => {
       subLotNo: res.data[0].FLOTNO2,
       grade: res.data[0].FRANK,
       length: res.data[0].FOHQTY,
+      ordflg: res.data[0].FODRFLG
     });
     store.addBarcodeDataList({
       lotNo: res.data[0].FLOTNO,
       subLotNo: res.data[0].FLOTNO2,
       grade: res.data[0].FRANK,
       length: res.data[0].FOHQTY,
+      ordflg: res.data[0].FODRFLG
     });
 
     inputValue.value = "";
