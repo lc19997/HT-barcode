@@ -148,5 +148,57 @@ router.get('/barcode-data', async (req, res) => {
     }
 });
 
+router.post("/save", async (req, res) => {
+    const { lotNo, subLotNo, orderType, orderNo } = req.body;
+
+    if (!lotNo || !subLotNo || !orderType || !orderNo) {
+        return res.status(400).json({
+            error: "lotNo, subLotNo, orderType, orderNo are required.",
+        });
+    }
+
+    let connection;
+
+    try {
+        connection = await getConnection();
+
+        const sql = `
+      UPDATE test99.spoptrnf
+         SET fpopupdate = '0'
+       WHERE flotno   = :lotNo
+         AND flotno2  = :subLotNo
+         AND fodrflg  = :orderType
+         AND fodrno   = :orderNo
+         AND fpopupdate = 'W'
+    `;
+
+        const binds = {
+            lotNo,
+            subLotNo,
+            orderType,
+            orderNo,
+        };
+
+        const result = await connection.execute(sql, binds, { autoCommit: true });
+
+        res.json({
+            updatedRows: result.rowsAffected || 0,
+            message: "fpopupdate updated to '0' where fpopupdate was 'W'.",
+        });
+    } catch (err) {
+        console.error("DB error:", err);
+        res.status(500).json({ error: "Database update failed." });
+    } finally {
+        if (connection) {
+            try {
+                await connection.close();
+            } catch (e) {
+                console.error("Failed to close DB connection:", e);
+            }
+        }
+    }
+});
+
+
 // Add similar for /orders, /allocated, /save-allocation (INSERT)
 module.exports = router;
