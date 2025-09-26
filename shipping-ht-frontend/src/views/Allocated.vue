@@ -89,12 +89,16 @@ onBeforeUnmount(() => {
 });
 
 const fetchList = async (barcode, fshpno) => {
+
+  const FODRFLG = order?.fodrflg;
+  const FODRNO = order?.fdrno;
+
   const res = await axios.get(
     `${import.meta.env.VITE_API_BASE_URL}/api/barcode/get`,
     {
       params: {
-        barcode,
-        fshpno
+        FODRFLG,
+        FODRFLG,
       },
     }
   );
@@ -157,54 +161,66 @@ const processBarcode = async (raw) => {
   const lotNo = barcode.slice(0, 10);
   const subLotNo = barcode.slice(10, 13);
 
+  // 1. 在庫No一致チェック
+  if (order.value.flotno && order.value.flotno !== lotNo) {
+    showError("在庫Noが一致しません。");
+    return;
+  }
+
   try {
-    const res = await axios.get(
-      `${import.meta.env.VITE_API_BASE_URL}/api/barcode-data`,
+    // 2. DBに存在するかチェック
+    const lookupRes = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/api/barcode/lookup`,
       {
         params: {
-          lotNo,
-          subLotNo,
-          shippingNo: order.value.shippingNo,
-        },
+          barcode,
+          fshpno: order.value.shippingNo,
+          fodrflg: order.value.fodrflg,
+          fodrno: order.value.FODRNO
+        }
       }
     );
 
-    if (!res.data) {
-      showError("データが見つかりませんでした。");
-      return;
-    }
+    const alreadyExists = lookupRes.data.count > 0;
 
-    // --- エラーチェック ---
-    if (order.value.flotno && order.value.flotno !== lotNo) {
-      showError("在庫Noが一致しません。");
-      return;
-    }
-    console.log("responsive data:", res.data[0]);
+    // 3. 登録API呼び出し (existsフラグは backend に送る)
+    const addRes = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/api/add-barcode`,
+      {
+        barcode,
+        fshpno: order.value.shippingNo,
+        fpoptrnno: Date.now(), // FIXME: should be Oracle sequence
+        isExist: alreadyExists
+      }
+    );
 
-    // 正常時 → リストに追加
+    console.log("Insert result:", addRes.data);
+
+    // 4. フロントリストに追加
     barcodeDataList.value.push({
-      lotNo: res.data[0].FLOTNO,
-      subLotNo: res.data[0].FLOTNO2,
-      grade: res.data[0].FRANK,
-      length: res.data[0].FOHQTY,
-      ordflg: res.data[0].FODRFLG
+      lotNo,
+      subLotNo,
+      grade: order.value.fgrade || "",
+      length: order.value.fohqty || "",
     });
+
     store.addBarcodeDataList({
-      lotNo: res.data[0].FLOTNO,
-      subLotNo: res.data[0].FLOTNO2,
-      grade: res.data[0].FRANK,
-      length: res.data[0].FOHQTY,
-      ordflg: res.data[0].FODRFLG
+      lotNo,
+      subLotNo,
+      grade: order.value.fgrade || "",
+      length: order.value.fohqty || "",
     });
 
     inputValue.value = "";
     showTenkey.value = false;
   } catch (err) {
     console.error("Failed to process barcode:", err);
-    showError("バーコードの処理に失敗しました。");
+    showError("バーコード処理に失敗しました。");
     inputValue.value = "";
   }
 };
+
+
 
 // --- エラー処理（音＋バイブ + シェイク） ---
 const showError = (msg) => {

@@ -28,7 +28,8 @@ interface Barcode {
     subLotNo: string;
     grade: string;
     length: number;
-    odrflg: string;
+    fodrflg: string;
+    fodrno: string;
 }
 
 export const useAppStore = defineStore('app', {

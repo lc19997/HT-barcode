@@ -87,7 +87,9 @@ router.get('/orders', async (req, res) => {
             fgrade: row[64],      // check column index mapping
             ffabricnum: row[65],
             fpoppcs: row[69],
-            flotno: row[56]
+            flotno: row[56],
+            fodrflg: row[34],
+            fodrno: row[36]
         })));
 
     } catch (err) {
@@ -317,17 +319,15 @@ router.post("/add-barcode", async (req, res) => {
 });
 
 router.get("/barcode/lookup", async (req, res) => {
-    const { barcode, fshpno } = req.query;
+    const { barcode, fshpno, fodrflg, fodrno } = req.query;
 
     if (!barcode || barcode.length < 13) {
         return res.status(400).json({ error: "バーコードが不正です。(min 13桁)" });
     }
-
-    if (!fshpno) {
-        return res.status(400).json({ error: "出荷Noが必須です。" });
+    if (!fshpno || !fodrflg || !fodrno) {
+        return res.status(400).json({ error: "出荷No, FODRFLG, FODRNO が必須です。" });
     }
 
-    // Split barcode into flotno (first 10 digits) + flotno2 (last 3 digits)
     const flotno = barcode.substring(0, 10);
     const flotno2 = barcode.substring(10, 13);
 
@@ -336,18 +336,24 @@ router.get("/barcode/lookup", async (req, res) => {
         connection = await getConnection();
 
         const sql = `
-            SELECT *
-            FROM ZINVQTY_V ZI
-            JOIN ZSHPINS_V ZS
-                ON ZS.FLOTNO = ZI.FLOTNO
-            WHERE ZI.FLOTNO  = :flotno
-            AND ZI.FLOTNO2 = :flotno2
-            AND ZS.FSHPNO  = :fshpno
-            AND ZS.FINVSITE = ZI.FINVSITE
+            SELECT flotno, flotno2, fflsegment02, fpopqty
+            FROM spoptrnf main
+            WHERE fodrflg = :fodrflg
+              AND fodrno  = :fodrno
+              AND flotno  = :flotno
+              AND flotno2 = :flotno2
+              AND NOT EXISTS (
+                SELECT 1
+                FROM spoptrnf ref
+                WHERE ref.fpopqty = 0
+                  AND main.flotno  = ref.flotno
+                  AND main.flotno2 = ref.flotno2
+                  AND main.fodrno  = ref.fodrno
+                  AND main.fodrflg = ref.fodrflg
+              )
         `;
 
-
-        const binds = { flotno, flotno2, fshpno };
+        const binds = { flotno, flotno2, fodrflg, fodrno };
 
         const result = await connection.execute(sql, binds, { outFormat: require("oracledb").OUT_FORMAT_OBJECT });
 
@@ -360,46 +366,46 @@ router.get("/barcode/lookup", async (req, res) => {
         res.status(500).json({ error: "DB処理に失敗しました。" });
     } finally {
         if (connection) {
-            try {
-                await connection.close();
-            } catch (e) {
-                console.error("Failed to close DB connection", e);
-            }
+            try { await connection.close(); } catch (e) { }
         }
     }
 });
 
-router.get("/barcode/get", async (req, res) => {
-    const { barcode, fshpno } = req.query;
 
-    // if (!barcode || barcode.length < 13) {
-    //     return res.status(400).json({ error: "バーコードが不正です。(min 13桁)" });
-    // }
+router.get("/barcode/get", async (req, res) => {
+    const { FODRFLG, FODRNO } = req.query;
 
     console.log("params:", req.query);
-    if (!fshpno) {
-        return res.status(400).json({ error: "出荷Noが必須です。" });
-    }
 
-    // Split barcode into flotno (first 10 digits) + flotno2 (last 3 digits)
-    const flotno = barcode.substring(0, 10);
-    const flotno2 = barcode.substring(10, 13);
+    if (!FODRFLG || !FODRNO) {
+        return res.status(400).json({ error: "FODRFLG と FODRNO は必須です。" });
+    }
 
     let connection;
     try {
         connection = await getConnection();
 
         const sql = `
-            SELECT *
-            FROM ZINVQTY_V ZI
-            JOIN ZSHPINS_V ZS
-                ON ZS.FLOTNO = ZI.FLOTNO
-            WHERE ZI.FLOTNO  = :flotno
-            AND ZS.FSHPNO  = :fshpno
-            AND ZS.FINVSITE = ZI.FINVSITE
-        `;
+      SELECT 
+          flotno,
+          flotno2,
+          fflsegment02,
+          fpopqty
+      FROM spoptrnf main
+      WHERE fodrflg = :fodrflg
+        AND fodrno  = :fodrno
+        AND NOT EXISTS (
+              SELECT 1
+              FROM spoptrnf ref
+              WHERE ref.fpopqty = 0
+                AND main.flotno  = ref.flotno
+                AND main.flotno2 = ref.flotno2
+                AND main.fodrno  = ref.fodrno
+                AND main.fodrflg = ref.fodrflg
+        )
+    `;
 
-        const binds = { flotno, fshpno };
+        const binds = { FODRFLG, FODRNO };
 
         const result = await connection.execute(sql, binds, { outFormat: require("oracledb").OUT_FORMAT_OBJECT });
 
