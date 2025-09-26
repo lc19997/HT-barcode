@@ -72,7 +72,8 @@ const goSummary = () => {
 <style scoped>
 /* Navigation Bar */
 .nav-bar {
-  position: relative;
+  position: fixed;
+  top: 0px;
   display: flex;
   align-items: center;
   justify-content: center; /* center contents */
@@ -80,6 +81,8 @@ const goSummary = () => {
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
   background: #e9e7e7;
+  max-width: 347px;
+  width: 100%;
 }
 
 .nav-title {
