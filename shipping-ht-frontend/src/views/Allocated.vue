@@ -84,6 +84,27 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleGlobalBarcodeInput);
 });
 
+const fetchList = async (barcode, fshpno) => {
+  const res = await axios.get(
+    `${import.meta.env.VITE_API_BASE_URL}/api/barcode/get`,
+    {
+      params: {
+        barcode,
+        fshpno
+      },
+    }
+  );
+  res.data.data.forEach(element => {
+    barcodeDataList.value.push({
+      lotNo: element.FLOTNO,
+      subLotNo: element.FLOTNO2,
+      grade: element.FRANK,
+      length: element.FOHQTY,
+      ordflg: element.FODRFLG
+    });
+  });
+}
+
 const fetchOrder = async (shippingNo) => {
   try {
     const res = await axios.get(

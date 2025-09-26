@@ -98,9 +98,9 @@ const fetchOrders = async () => {
       }
     );
     orders.value = [...res.data];
-     console.log("Fetched orders:", orders.value);
+    console.log("Fetched orders:", orders.value);
   } catch (err) {
-    console.error("Failed to fetch orders:", err);18
+    console.error("Failed to fetch orders:", err);
     orders.value = [];
   }
 };
