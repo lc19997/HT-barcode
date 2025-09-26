@@ -159,6 +159,8 @@ const goToAllocated = (order) => {
 
 /* Header */
 .nav-bar {
+  position: fixed;
+  top: 0px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -166,7 +168,8 @@ const goToAllocated = (order) => {
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
   background-color: #f8f9fa;
-  position: relative;
+  max-width: 359px;
+  width: 100%;
 }
 
 .order-list {
@@ -197,7 +200,7 @@ const goToAllocated = (order) => {
   flex: 1;
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 45px 0 0 0;
   overflow-y: auto;
   padding-top: 5px;
 }

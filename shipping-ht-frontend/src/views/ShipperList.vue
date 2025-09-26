@@ -70,6 +70,14 @@ const goSummary = () => {
 </script>
 
 <style scoped>
+.shipper-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 375px;
+  margin: 0 auto;
+  background: #fff;
+}
 /* Navigation Bar */
 .nav-bar {
   position: fixed;
@@ -81,7 +89,7 @@ const goSummary = () => {
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
   background: #e9e7e7;
-  max-width: 347px;
+  max-width: 359px;
   width: 100%;
 }
 
@@ -115,7 +123,7 @@ const goSummary = () => {
 .shipper-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 45px 0 0 0;
 }
 
 .shipper-item {

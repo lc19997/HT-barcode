@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="nav-bar">
       <button class="nav-button left" @click="goBack">
-        {{ store.currentOrder?.shippingNo || '出荷No' }}
+        &lt; {{ store.currentOrder?.shippingNo || '出荷No' }}
       </button>
       <h1 class="title">集計</h1>
       <div class="right"></div>
@@ -108,7 +108,7 @@ const saveData = async () => {
 .container {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 622px;
   max-width: 375px;
   margin: 0 auto;
   background: #fff;
@@ -116,14 +116,17 @@ const saveData = async () => {
 
 /* Header */
 .nav-bar {
-  position: relative;
+  position: fixed;
+  top: 0px;
   display: flex;
   align-items: center;
   justify-content: center; /* center contents */
   height: 44px;
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
-  background: #fff;
+  background: #e9e7e7;
+  max-width: 359px;
+  width: 100%;
 }
 
 .title {
@@ -154,6 +157,7 @@ const saveData = async () => {
 .summary-content {
   flex: 1;
   overflow-y: auto;
+  margin: 45px 0 0 0;
 }
 .summary-table {
   width: 100%;
@@ -169,10 +173,27 @@ const saveData = async () => {
 }
 
 /* Footer */
-.footer {
+/* .footer {
   border-top: 1px solid #ddd;
   padding: 8px;
   background: #f9f9f9;
+} */
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 375px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  /* height: 48px; */
+  padding: 8px;
+  border-top: 1px solid #ddd;
+  background: #f5f5f5;
+  flex-shrink: 0;
 }
 .save-btn {
   width: 100%;

@@ -7,24 +7,27 @@
       <button class="action-btn" @click="router.push('/summary')">集計</button>
     </header>
 
-    <!-- Lot / SubLot list -->
-    <ul v-if="barcodeDataList.length > 0" class="lot-list">
-      <li v-for="(item, idx) in barcodeDataList" :key="idx" class="lot-row">
-        <span class="check">✔</span>
-        <span class="lot">{{ item.lotNo }}-{{ String(item.subLotNo).padStart(3, '0') }}</span>
-        <span class="grade">{{ item.grade }}</span>
-        <span class="length">{{ item.length }}m</span>
-      </li>
-    </ul>
+    <div class="data-container">
+      <!-- Lot / SubLot list -->
+      <ul v-if="barcodeDataList.length > 0" class="lot-list">
+        <li v-for="(item, idx) in barcodeDataList" :key="idx" class="lot-row">
+          <span class="check">✔</span>
+          <span class="lot">{{ item.lotNo }}-{{ String(item.subLotNo).padStart(3, '0') }}</span>
+          <span class="grade">{{ item.grade }}</span>
+          <span class="length">{{ item.length }}m</span>
+        </li>
+      </ul>
 
-    <!-- Order Details -->
-    <section class="order-info" v-if="order">
-      <div class="detail-row">在庫No: {{ order.flotno || 'N/A' }}</div>
-      <!-- <div class="detail-row">加工No: {{ order.processNo || 'N/A' }}</div> -->
-      <div class="detail-row">等級: {{ order.fgrade || 'N/A' }}</div>
-      <div class="detail-row">反数: {{ order.ffabricnum || 'N/A' }}</div>
-    </section>
-    <div v-else class="no-data">注文データがありません</div>
+      <!-- Order Details -->
+      <section class="order-info" v-if="order">
+        <div class="detail-row">在庫No: {{ order.flotno || 'N/A' }}</div>
+        <!-- <div class="detail-row">加工No: {{ order.processNo || 'N/A' }}</div> -->
+        <div class="detail-row">等級: {{ order.fgrade || 'N/A' }}</div>
+        <div class="detail-row">反数: {{ order.ffabricnum || 'N/A' }}</div>
+      </section>
+      <div v-else class="no-data">注文データがありません</div>
+    </div>
+    
 
     <!-- Footer -->
     <footer class="footer">
@@ -77,6 +80,7 @@ onMounted(() => {
   } else {
     fetchOrder(route.params.shippingNo);
   }
+  fetchList(store.currentOrder.flotno, route.params.shippingNo);
   window.addEventListener("keydown", handleGlobalBarcodeInput);
 });
 
@@ -273,13 +277,16 @@ const playBeep = () => {
 }
 
 .nav-bar {
-  position: relative; /* make parent relative */
+  position: fixed; /* make parent relative */
+  top: 0px;
   display: flex;
   align-items: center;
   height: 44px;
   padding: 0 8px;
   border-bottom: 1px solid #dcdcdc;
   background-color: #f8f9fa;
+  max-width: 359px;
+  width: 100%;
 }
 
 .title {
@@ -400,13 +407,15 @@ const playBeep = () => {
   right: -95px;
 }
 
+.data-container {
+  margin: 45px 0 45px 0;
+  overflow-y: auto;
+}
+
 .lot-list {
   list-style: none;         /* remove front dots */
   padding: 0;
-  margin: 8px 0;
-  /* border: 1px solid #e0e0e0;
-  border-radius: 8px; */
-  overflow: hidden;
+  margin: 0 0 0 0;
 }
 
 .lot-row {
