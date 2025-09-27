@@ -90,15 +90,18 @@ onBeforeUnmount(() => {
 
 const fetchList = async (barcode, fshpno) => {
 
-  const FODRFLG = order?.fodrflg;
-  const FODRNO = order?.fdrno;
+  // const FODRFLG = order?.fodrflg;
+  // const FODRNO = order?.fdrno;
+
+  const FODRFLG = order.value.fodrflg;
+  const FODRNO = order.value.fodrno;
 
   const res = await axios.get(
     `${import.meta.env.VITE_API_BASE_URL}/api/barcode/get`,
     {
       params: {
         FODRFLG,
-        FODRFLG,
+        FODRNO,
       },
     }
   );
