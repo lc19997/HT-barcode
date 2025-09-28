@@ -371,6 +371,10 @@ const playBeep = () => {
 
 .order-info,
 .barcode-section {
+  position: fixed;
+  bottom: 40px;
+  max-width: 375px;
+  width: 100%;
   padding: 8px 12px;
   font-size: 14px;
   flex: 1;
@@ -448,7 +452,7 @@ const playBeep = () => {
 }
 
 .data-container {
-  margin: 45px 0 45px 0;
+  margin: 45px 0 161px 0;
   overflow-y: auto;
 }
 
