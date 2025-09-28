@@ -192,7 +192,7 @@ const goToAllocated = (order) => {
 
 .no-data {
   text-align: center;
-  padding: 20px;
+  padding: 70px;
   color: #888;
 }
 

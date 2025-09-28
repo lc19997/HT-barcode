@@ -214,10 +214,15 @@ router.post("/add-barcode", async (req, res) => {
     const flotno = barcode.substring(0, 10);
     const flotno2 = barcode.substring(10, 13);
 
+
+
     let connection;
     try {
         connection = await getConnection();
 
+        const seqSql = `SELECT SHPPOPTRNNO.NEXTVAL AS SEQ FROM dual`;
+        const seqResult = await connection.execute(seqSql);
+        const fpoptrnno = seqResult.rows[0][0];
         // 1. Lookup first
         const lookupSql = `
             SELECT ZI.FLOTNO, ZI.FLOTNO2, ZI.FITEMNO, ZI.FUNIT, ZI.FWHCD,
@@ -225,15 +230,14 @@ router.post("/add-barcode", async (req, res) => {
                    ZS.FODRFLG, ZS.FODRNO
               FROM ZINVQTY_V ZI
               JOIN ZSHPINS_V ZS ON ZS.FLOTNO = ZI.FLOTNO
-             WHERE ZI.FLOTNO  = :flotno
-               AND ZI.FLOTNO2 = :flotno2
-               AND ZS.FSHPNO  = :fshpno
+             WHERE ZI.FLOTNO  = SUBSTR('3253002301003', 1 , 10)
+               AND ZI.FLOTNO2 = SUBSTR('3253002301003', 11 , 3) 
+               AND ZS.FSHPNO  =  '0000000478' 
                AND ZS.FINVSITE = ZI.FINVSITE
         `;
         const lookupResult = await connection.execute(
             lookupSql,
-            { flotno, flotno2, fshpno },
-            { outFormat: require("oracledb").OUT_FORMAT_OBJECT }
+            [], // ← bind variables (empty in your case)
         );
 
         if (lookupResult.rows.length === 0) {
@@ -252,6 +256,8 @@ router.post("/add-barcode", async (req, res) => {
             )
         `;
 
+        let updatedDisplayData;
+
         let sql, binds;
         if (isExist) {
             sql = `
@@ -266,7 +272,7 @@ router.post("/add-barcode", async (req, res) => {
               )
             `;
             binds = {
-                fpoptrnno: req.body.fpoptrnno, // from frontend or Oracle sequence
+                fpoptrnno: fpoptrnno, // from frontend or Oracle sequence
                 funit: row.FUNIT,
                 fitemno: row.FITEMNO,
                 flotno: row.FLOTNO,
@@ -277,6 +283,7 @@ router.post("/add-barcode", async (req, res) => {
                 flctcd: row.FLCTCD,
                 frank: row.FRANK
             };
+            updatedDisplayData = [];
         } else {
             sql = `
               ${commonSql}
@@ -290,7 +297,7 @@ router.post("/add-barcode", async (req, res) => {
               )
             `;
             binds = {
-                fpoptrnno: req.body.fpoptrnno,
+                fpoptrnno: fpoptrnno,
                 fohqty: row.FOHQTY,
                 funit: row.FUNIT,
                 fitemno: row.FITEMNO,
@@ -319,15 +326,16 @@ router.post("/add-barcode", async (req, res) => {
 });
 
 router.get("/barcode/lookup", async (req, res) => {
-    const { barcode, fshpno, fodrflg, fodrno } = req.query;
+    const { barcode, fshpno } = req.query;
 
     if (!barcode || barcode.length < 13) {
         return res.status(400).json({ error: "バーコードが不正です。(min 13桁)" });
     }
-    if (!fshpno || !fodrflg || !fodrno) {
-        return res.status(400).json({ error: "出荷No, FODRFLG, FODRNO が必須です。" });
+    if (!fshpno) {
+        return res.status(400).json({ error: "出荷Noが必須です。" });
     }
 
+    // Split barcode → flotno (first 10 digits) + flotno2 (last 3 digits)
     const flotno = barcode.substring(0, 10);
     const flotno2 = barcode.substring(10, 13);
 
@@ -336,26 +344,21 @@ router.get("/barcode/lookup", async (req, res) => {
         connection = await getConnection();
 
         const sql = `
-            SELECT flotno, flotno2, fflsegment02, fpopqty
-            FROM spoptrnf main
-            WHERE fodrflg = :fodrflg
-              AND fodrno  = :fodrno
-              AND flotno  = :flotno
-              AND flotno2 = :flotno2
-              AND NOT EXISTS (
-                SELECT 1
-                FROM spoptrnf ref
-                WHERE ref.fpopqty = 0
-                  AND main.flotno  = ref.flotno
-                  AND main.flotno2 = ref.flotno2
-                  AND main.fodrno  = ref.fodrno
-                  AND main.fodrflg = ref.fodrflg
-              )
+            SELECT ZI.*, ZS.*
+              FROM ZINVQTY_V ZI
+              JOIN ZSHPINS_V ZS
+                ON ZS.FLOTNO = ZI.FLOTNO
+             WHERE ZI.FLOTNO  = :flotno
+               AND ZI.FLOTNO2 = :flotno2
+               AND ZS.FSHPNO  = :fshpno
+               AND ZS.FINVSITE = ZI.FINVSITE
         `;
 
-        const binds = { flotno, flotno2, fodrflg, fodrno };
+        const binds = { flotno, flotno2, fshpno };
 
-        const result = await connection.execute(sql, binds, { outFormat: require("oracledb").OUT_FORMAT_OBJECT });
+        const result = await connection.execute(sql, binds, {
+            outFormat: require("oracledb").OUT_FORMAT_OBJECT
+        });
 
         res.json({
             count: result.rows.length,
@@ -366,10 +369,15 @@ router.get("/barcode/lookup", async (req, res) => {
         res.status(500).json({ error: "DB処理に失敗しました。" });
     } finally {
         if (connection) {
-            try { await connection.close(); } catch (e) { }
+            try {
+                await connection.close();
+            } catch (e) {
+                console.error("Failed to close DB connection", e);
+            }
         }
     }
 });
+
 
 
 router.get("/barcode/get", async (req, res) => {
@@ -395,7 +403,7 @@ router.get("/barcode/get", async (req, res) => {
       WHERE fodrflg = :fodrflg
         AND fodrno  = :fodrno
         AND NOT EXISTS (
-              SELECT 1
+              SELECT 'X'
               FROM spoptrnf ref
               WHERE ref.fpopqty = 0
                 AND main.flotno  = ref.flotno
@@ -408,6 +416,7 @@ router.get("/barcode/get", async (req, res) => {
         const binds = { FODRFLG, FODRNO };
 
         const result = await connection.execute(sql, binds, { outFormat: require("oracledb").OUT_FORMAT_OBJECT });
+        console.log(result.rows);
 
         res.json({
             count: result.rows.length,

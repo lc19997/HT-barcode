@@ -18,6 +18,15 @@
         </li>
       </ul>
 
+            <!-- Lot / SubLot list -->
+      <ul v-if="unverfiedBarCodeDataList.length > 0" class="lot-list">
+        <li v-for="(item, idx) in unverfiedBarCodeDataList" :key="idx" class="lot-row">
+          <span class="lot">{{ item.lotNo }}-{{ String(item.subLotNo).padStart(3, '0') }}</span>
+          <span class="grade">{{ item.grade }}</span>
+          <span class="length">{{ item.length }}m</span>
+        </li>
+      </ul>
+
       <!-- Order Details -->
       <section class="order-info" v-if="order">
         <div class="detail-row">在庫No: {{ order.flotno || 'N/A' }}</div>
@@ -69,6 +78,7 @@ const inputValue = ref("");
 const showTenkey = ref(false);
 const input = ref(null);
 const barcodeDataList = ref([]);
+const unverfiedBarCodeDataList = ref([]);
 
 let barcodeBuffer = "";
 let barcodeTimer = null;
@@ -109,11 +119,12 @@ const fetchList = async (barcode, fshpno) => {
     barcodeDataList.value.push({
       lotNo: element.FLOTNO,
       subLotNo: element.FLOTNO2,
-      grade: element.FRANK,
-      length: element.FOHQTY,
-      ordflg: element.FODRFLG
+      grade: element.FFLSEGMENT02.trim(),
+      length: element.FPOPQTY,
+      // ordflg: element.FODRFLG
     });
   });
+  console.log(barcodeDataList.value);
 }
 
 const fetchOrder = async (shippingNo) => {
@@ -169,6 +180,7 @@ const processBarcode = async (raw) => {
     showError("在庫Noが一致しません。");
     return;
   }
+  console.log(order.value.lotNo);
 
   try {
     // 2. DBに存在するかチェック
@@ -177,14 +189,23 @@ const processBarcode = async (raw) => {
       {
         params: {
           barcode,
-          fshpno: order.value.shippingNo,
-          fodrflg: order.value.fodrflg,
-          fodrno: order.value.FODRNO
+          fshpno: order.value.shippingNo
         }
       }
     );
 
-    const alreadyExists = lookupRes.data.count > 0;
+     const alreadyExists = lookupRes.data.count > 0;
+    // if (alreadyExists) {
+    //     lookupRes.data.data.forEach(element => {
+    //     unverfiedBarCodeDataList.value.push({
+    //       lotNo: element.FLOTNO,
+    //       subLotNo: element.FLOTNO2,
+    //       grade: element.FRANK,
+    //       length: element.FOHQTY,
+    //     // ordflg: element.FODRFLG
+    //     });
+    //  });
+    // }
 
     // 3. 登録API呼び出し (existsフラグは backend に送る)
     const addRes = await axios.post(
@@ -200,7 +221,7 @@ const processBarcode = async (raw) => {
     console.log("Insert result:", addRes.data);
 
     // 4. フロントリストに追加
-    barcodeDataList.value.push({
+    unverfiedBarCodeDataList.value.push({
       lotNo,
       subLotNo,
       grade: order.value.fgrade || "",
