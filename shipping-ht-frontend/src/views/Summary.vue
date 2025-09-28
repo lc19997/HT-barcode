@@ -112,6 +112,7 @@ const saveData = async () => {
   } catch (err) {
     console.error("保存に失敗しました:", err);
     alert("保存に失敗しました");
+    isSaving.value = false;
   }
 };
 </script>
