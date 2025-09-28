@@ -48,19 +48,27 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <button class="save-btn" @click="saveData">保存</button>
+      <!-- <button class="save-btn" @click="saveData">保存</button> -->
+
+      <button class="save-btn" @click="saveData" :disabled="isSaving">
+        <span v-if="isSaving" class="spinner"></span>
+        <span v-if="isSaving" class="btn-text">保存</span>
+        <span v-if="!isSaving">保存</span>
+      </button>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import axios from "axios";
 
 const router = useRouter();
 const store = useAppStore();
+
+const isSaving = ref(false);
 
 // --- 集計データ ---
 const totalRecords = computed(() =>
@@ -92,6 +100,7 @@ const goBack = () => {
 
 const saveData = async () => {
   console.log(store.barcodeDataList);
+  isSaving.value = true;
   try {
     await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/save`, {
       barcodeData: store.barcodeDataList,
@@ -99,6 +108,7 @@ const saveData = async () => {
       fodrno: store.currentOrder.fodrno
     });
     router.push("/orders");
+    isSaving.value = false;
   } catch (err) {
     console.error("保存に失敗しました:", err);
     alert("保存に失敗しました");
@@ -206,13 +216,38 @@ const saveData = async () => {
   flex-shrink: 0;
 }
 .save-btn {
+  position: relative;
   width: 100%;
   padding: 10px;
   font-size: 16px;
-  background: #007aff;
-  color: #fff;
+  background: #fff;
+  color: #d3d3d3;
   border: none;
   border-radius: 6px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-text {
+  position: fixed;
+  right: 55px;
+}
+
+/* Spinner */
+.spinner {
+  border: 2px solid rgba(175, 170, 170, 0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Footer */
