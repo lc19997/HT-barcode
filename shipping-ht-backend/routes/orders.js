@@ -246,6 +246,7 @@ router.post("/add-barcode", async (req, res) => {
 
         const row = lookupResult.rows[0];
 
+
         // 2. Insert with lookup data
         const commonSql = `
             INSERT INTO spoptrnf (
@@ -256,7 +257,7 @@ router.post("/add-barcode", async (req, res) => {
             )
         `;
 
-        let updatedDisplayData;
+        let updatedDisplayData = [];
 
         let sql, binds;
         if (isExist) {
@@ -272,18 +273,18 @@ router.post("/add-barcode", async (req, res) => {
               )
             `;
             binds = {
-                fpoptrnno: fpoptrnno, // from frontend or Oracle sequence
-                funit: row.FUNIT,
-                fitemno: row.FITEMNO,
-                flotno: row.FLOTNO,
-                flotno2: row.FLOTNO2,
-                fwhcd: row.FWHCD,
-                fodrflg: row.FODRFLG,
-                fodrno: row.FODRNO,
-                flctcd: row.FLCTCD,
-                frank: row.FRANK
+                fpoptrnno: fpoptrnno, // from sequence
+                funit: row[3],
+                fitemno: row[2],
+                flotno: row[0],
+                flotno2: row[1],
+                fwhcd: row[4],
+                fodrflg: row[8],
+                fodrno: row[9],
+                flctcd: row[6],
+                frank: row[7]
             };
-            updatedDisplayData = [];
+            // 
         } else {
             sql = `
               ${commonSql}
@@ -291,29 +292,37 @@ router.post("/add-barcode", async (req, res) => {
                 'BARCODE',
                 :fpoptrnno,
                 'SHP','ISS','ALC',
-                :fohqty, :funit, :fitemno, :flotno, :flotno2,
+                :fpopqty, :funit, :fitemno, :flotno, :flotno2,
                 :fwhcd, SYSDATE, :fodrflg, :fodrno, '',
                 'W', :flctcd, :frank
               )
             `;
             binds = {
-                fpoptrnno: fpoptrnno,
-                fohqty: row.FOHQTY,
-                funit: row.FUNIT,
-                fitemno: row.FITEMNO,
-                flotno: row.FLOTNO,
-                flotno2: row.FLOTNO2,
-                fwhcd: row.FWHCD,
-                fodrflg: row.FODRFLG,
-                fodrno: row.FODRNO,
-                flctcd: row.FLCTCD,
-                frank: row.FRANK
+                fpoptrnno: fpoptrnno, // from sequence
+                fpopqty: row[5],
+                funit: row[3],
+                fitemno: row[2],
+                flotno: row[0],
+                flotno2: row[1],
+                fwhcd: row[4],
+                fodrflg: row[8],
+                fodrno: row[9],
+                flctcd: row[6],
+                frank: row[7]
             };
+            console.log("Lookup result:", binds);
+            updatedDisplayData.push({
+                FLOTNO: row[0],
+                FLOTNO2: row[1],
+                FRANK: row[7],   // if that’s the correct index
+                FOHQTY: row[5]
+            });
+            console.log("updatedDisplayData:", updatedDisplayData);
         }
 
         const result = await connection.execute(sql, binds, { autoCommit: true });
 
-        res.json({ message: "Insert successful", rowsAffected: result.rowsAffected });
+        res.json({ message: "Insert successful", data: updatedDisplayData });
 
     } catch (err) {
         console.error("DB error:", err);

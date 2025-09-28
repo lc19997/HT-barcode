@@ -4,13 +4,13 @@
     <header class="nav-bar">
       <button class="back-btn" @click="router.push('/orders')">&lt; 出荷No.選択</button>
       <h1 class="title">{{ order?.shippingNo }}</h1>
-      <button class="action-btn" @click="router.push('/summary')">集計</button>
+      <button class="action-btn" @click="gotosummary()">集計</button>
     </header>
 
     <div class="data-container">
       <!-- Lot / SubLot list -->
       <ul v-if="barcodeDataList.length > 0" class="lot-list">
-        <li v-for="(item, idx) in barcodeDataList" :key="idx" class="lot-row">
+        <li v-for="(item, idx) in barcodeDataList" :key="item.id" class="lot-row">
           <span class="check">✔</span>
           <span class="lot">{{ item.lotNo }}-{{ String(item.subLotNo).padStart(3, '0') }}</span>
           <span class="grade">{{ item.grade }}</span>
@@ -20,7 +20,8 @@
 
             <!-- Lot / SubLot list -->
       <ul v-if="unverfiedBarCodeDataList.length > 0" class="lot-list">
-        <li v-for="(item, idx) in unverfiedBarCodeDataList" :key="idx" class="lot-row">
+        <li v-for="(item, idx) in unverfiedBarCodeDataList" :key="item.id" class="lot-row">
+          <span class="nocheck">     </span>
           <span class="lot">{{ item.lotNo }}-{{ String(item.subLotNo).padStart(3, '0') }}</span>
           <span class="grade">{{ item.grade }}</span>
           <span class="length">{{ item.length }}m</span>
@@ -105,6 +106,7 @@ const fetchList = async (barcode, fshpno) => {
 
   const FODRFLG = order.value.fodrflg;
   const FODRNO = order.value.fodrno;
+  
 
   const res = await axios.get(
     `${import.meta.env.VITE_API_BASE_URL}/api/barcode/get`,
@@ -117,6 +119,7 @@ const fetchList = async (barcode, fshpno) => {
   );
   res.data.data.forEach(element => {
     barcodeDataList.value.push({
+      id : Date.now() + Math.random(),
       lotNo: element.FLOTNO,
       subLotNo: element.FLOTNO2,
       grade: element.FFLSEGMENT02.trim(),
@@ -180,7 +183,6 @@ const processBarcode = async (raw) => {
     showError("在庫Noが一致しません。");
     return;
   }
-  console.log(order.value.lotNo);
 
   try {
     // 2. DBに存在するかチェック
@@ -218,15 +220,30 @@ const processBarcode = async (raw) => {
       }
     );
 
-    console.log("Insert result:", addRes.data);
+    console.log("Insert result:", addRes);
 
     // 4. フロントリストに追加
-    unverfiedBarCodeDataList.value.push({
-      lotNo,
-      subLotNo,
-      grade: order.value.fgrade || "",
-      length: order.value.fohqty || "",
-    });
+    if(!alreadyExists){
+      unverfiedBarCodeDataList.value.push({
+        id : Date.now() + Math.random(),
+        lotNo: lotNo,
+        subLotNo: subLotNo,
+        grade: addRes.data.data[0].FRANK,
+        length: addRes.data.data[0].FOHQTY,
+      });
+      console.log(unverfiedBarCodeDataList.value);
+      //   store.addBarcodeDataList({
+      //   lotNo: lotNo,
+      //   subLotNo: subLotNo,
+      //   grade: addRes.data.data[0].FRANK,
+      //   length: addRes.data.data[0].FOHQTY,
+      // });
+    }else{
+      barcodeDataList.value = barcodeDataList.value.filter(item =>
+        !(normalizeLot(item.lotNo) === normalizeLot(lotNo) &&
+          normalizeSub(item.subLotNo) === normalizeSub(subLotNo))
+      );
+    } 
 
     store.addBarcodeDataList({
       lotNo,
@@ -244,7 +261,14 @@ const processBarcode = async (raw) => {
   }
 };
 
+const normalizeLot = (v) => String(v || "").trim();
+const normalizeSub = (v) => String(v || "").trim().padStart(3, "0");
 
+const removeFromBarcodeDataList = (lotNo, subLotNo) => {
+  barcodeDataList.value = barcodeDataList.value.filter(
+    (item) => !(item.lotNo === lotNo && String(item.subLotNo) === String(subLotNo))
+  );
+};
 
 // --- エラー処理（音＋バイブ + シェイク） ---
 const showError = (msg) => {
@@ -264,6 +288,21 @@ const triggerVibration = () => {
     shakeFallback();
   }
 };
+
+const gotosummary = () => {
+    // Merge verified + unverified barcodes
+  const mergedBarcodes = [
+    ...barcodeDataList.value,
+    ...unverfiedBarCodeDataList.value
+  ];
+
+  // Clear store list first (optional)
+  store.barcodeDataList = [];
+
+  // Add each item to the store
+  mergedBarcodes.forEach(item => store.addBarcodeDataList(item));
+  router.push("/summary");
+}
 
 // --- shake fallback animation ---
 const shakeFallback = () => {
@@ -314,6 +353,9 @@ const playBeep = () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.nocheck{
+  padding-left: 20px;
 }
 
 .nav-bar {
