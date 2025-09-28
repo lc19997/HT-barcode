@@ -151,12 +151,13 @@ router.get('/barcode-data', async (req, res) => {
 });
 
 router.post("/save", async (req, res) => {
-    const { lotNo, subLotNo, orderType, orderNo } = req.body;
+    const { barcodeData, fodrflg, fodrno } = req.body;
 
-    if (!lotNo || !subLotNo || !orderType || !orderNo) {
-        return res.status(400).json({
-            error: "lotNo, subLotNo, orderType, orderNo are required.",
-        });
+    if (!Array.isArray(barcodeData) || barcodeData.length === 0) {
+        return res.status(400).json({ error: "barcodeData is required and must be an array." });
+    }
+    if (!fodrflg || !fodrno) {
+        return res.status(400).json({ error: "fodrflg and fodrno are required." });
     }
 
     let connection;
@@ -164,28 +165,37 @@ router.post("/save", async (req, res) => {
     try {
         connection = await getConnection();
 
-        const sql = `
-      UPDATE test99.spoptrnf
-         SET fpopupdate = '0'
-       WHERE flotno   = :lotNo
-         AND flotno2  = :subLotNo
-         AND fodrflg  = :orderType
-         AND fodrno   = :orderNo
-         AND fpopupdate = 'W'
-    `;
+        let totalUpdated = 0;
 
-        const binds = {
-            lotNo,
-            subLotNo,
-            orderType,
-            orderNo,
-        };
+        for (const item of barcodeData) {
+            const { lotNo, subLotNo } = item;
 
-        const result = await connection.execute(sql, binds, { autoCommit: true });
+            if (!lotNo || !subLotNo) continue;
+
+            const sql = `
+        UPDATE spoptrnf
+           SET fpopupdate = '0'
+         WHERE flotno   = :lotNo
+           AND flotno2  = :subLotNo
+           AND fodrflg  = :fodrflg
+           AND fodrno   = :fodrno
+           AND fpopupdate = 'W'
+      `;
+
+            const binds = {
+                lotNo,
+                subLotNo,
+                fodrflg,
+                fodrno,
+            };
+
+            const result = await connection.execute(sql, binds, { autoCommit: true });
+            totalUpdated += result.rowsAffected || 0;
+        }
 
         res.json({
-            updatedRows: result.rowsAffected || 0,
-            message: "fpopupdate updated to '0' where fpopupdate was 'W'.",
+            updatedRows: totalUpdated,
+            message: `${totalUpdated} rows updated to fpopupdate = '0'.`,
         });
     } catch (err) {
         console.error("DB error:", err);

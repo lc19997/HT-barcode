@@ -26,9 +26,9 @@
             class="summary-row grade"
           >
             <td>{{store.currentOrder?.flotno }}</td>
-            <td>{{ store.currentOrder?.fgrade }}</td>
-            <td>{{ store.currentOrder?.fpoppcs }}</td>
-            <td>{{ store.currentOrder?.ffabricnum }}</td>
+            <td class="grade">{{ store.currentOrder?.fgrade }}</td>
+            <td>{{ totalRecords }}</td>
+            <td class="length">{{ totalLength }}</td>
           </tr>
 
           <!-- 等級 + 長さごと -->
@@ -38,9 +38,9 @@
             class="summary-row detail"
           >
             <td></td>
-            <td>{{ barcodeData?.grade }} {{ barcodeData?.length }}</td>
-            <td>{{ barcodeData?.grade }}</td>
-            <td>{{ barcodeData?.length }}</td>
+            <td class="grade">{{ barcodeData?.grade }} {{ barcodeData?.length }}</td>
+            <td>1</td>
+            <td class="length">{{ barcodeData?.length }}</td>
           </tr>
         </tbody>
       </table>
@@ -63,7 +63,7 @@ const router = useRouter();
 const store = useAppStore();
 
 // --- 集計データ ---
-const totalQty = computed(() =>
+const totalRecords = computed(() =>
   store.barcodeDataList?.reduce((sum, item) => sum + 1, 0) || 0
 );
 
@@ -91,10 +91,12 @@ const goBack = () => {
 };
 
 const saveData = async () => {
+  console.log(store.barcodeDataList);
   try {
     await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/save`, {
-      shippingNo: store.currentOrder.shippingNo,
-      allocations,
+      barcodeData: store.barcodeDataList,
+      fodrflg: store.currentOrder.fodrflg,
+      fodrno: store.currentOrder.fodrno
     });
     router.push("/orders");
   } catch (err) {
@@ -178,6 +180,14 @@ const saveData = async () => {
   padding: 8px;
   background: #f9f9f9;
 } */
+
+.grade {
+  text-align: left;
+}
+
+.length {
+  text-align: right;
+}
 
 .footer {
   position: fixed;
