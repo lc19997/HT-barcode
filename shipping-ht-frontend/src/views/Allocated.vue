@@ -353,6 +353,7 @@ const playBeep = () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 .nocheck{
   padding-left: 20px;

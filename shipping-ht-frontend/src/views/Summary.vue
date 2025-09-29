@@ -125,6 +125,7 @@ const saveData = async () => {
   max-width: 375px;
   margin: 0 auto;
   background: #fff;
+  position: relative;
 }
 
 /* Header */

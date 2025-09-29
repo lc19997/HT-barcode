@@ -155,6 +155,7 @@ const goToAllocated = (order) => {
   flex-direction: column;
   border: 0px solid #ccc;
   overflow:hidden;
+  position: relative;
 }
 
 /* Header */
