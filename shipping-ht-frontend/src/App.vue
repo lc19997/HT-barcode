@@ -36,7 +36,7 @@ onMounted(async () => {
 .app-container {
   max-width: 375px; /* iPhone SE3 logical width */
   margin: 0 auto;
-  height: 667px; /* iPhone SE3 logical height */
+  min-height: 400px; /* iPhone SE3 logical height */
   overflow-y: auto; /* Scrollable if content exceeds */
   background-color: #f8f8f8;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

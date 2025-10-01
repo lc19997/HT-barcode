@@ -150,7 +150,7 @@ const goToAllocated = (order) => {
   max-width: 375px;
   margin: 0 auto;
   background: #fff;
-  height: 667px;
+  min-height: 400px;
   display: flex;
   flex-direction: column;
   border: 0px solid #ccc;

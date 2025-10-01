@@ -121,7 +121,7 @@ const saveData = async () => {
 .container {
   display: flex;
   flex-direction: column;
-  height: 622px;
+  min-height: 400px;
   max-width: 375px;
   margin: 0 auto;
   background: #fff;
