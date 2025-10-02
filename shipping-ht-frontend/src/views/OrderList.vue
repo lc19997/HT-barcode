@@ -248,7 +248,7 @@ const goToAllocated = (order) => {
   display: flex;
   justify-content: center; 
   align-items: center;
-  padding: 8px;
+  padding: 8px 0px;
   border-top: 1px solid #ddd;
   background: #f5f5f5;
 }
@@ -282,6 +282,6 @@ const goToAllocated = (order) => {
   color: #007aff;
   border-radius: 4px;
   top: 1px;
-  right: -95px;
+  right: -91px;
 }
 </style>

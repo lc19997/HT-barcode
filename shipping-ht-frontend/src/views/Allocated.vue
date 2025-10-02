@@ -30,10 +30,10 @@
 
       <!-- Order Details -->
       <section class="order-info" v-if="order">
-        <div class="detail-row">在庫No: {{ order.flotno || 'N/A' }}</div>
+        <div class="detail-row"> &nbsp; &nbsp;在庫No: {{ order.flotno || 'N/A' }}</div>
         <!-- <div class="detail-row">加工No: {{ order.processNo || 'N/A' }}</div> -->
-        <div class="detail-row">等級: {{ order.fgrade || 'N/A' }}</div>
-        <div class="detail-row">反数: {{ order.ffabricnum || 'N/A' }}</div>
+        <div class="detail-row"> &nbsp; &nbsp;等級: {{ order.fgrade || 'N/A' }}</div>
+        <div class="detail-row"> &nbsp; &nbsp;反数: {{ order.ffabricnum || 'N/A' }}</div>
       </section>
       <div v-else class="no-data">注文データがありません</div>
     </div>
@@ -418,10 +418,11 @@ const playBeep = () => {
   bottom: 40px;
   max-width: 375px;
   width: 100%;
-  padding: 8px 12px;
+  padding: 8px 0px;
   font-size: 14px;
   flex: 1;
   overflow-y: auto;
+  background-color: #f5f5f5;
 }
 
 .detail-row {
@@ -451,15 +452,15 @@ const playBeep = () => {
   display: flex;
   justify-content: center; 
   align-items: center;
-  /* height: 48px; */
-  padding: 8px;
+  height: 48px;
+  padding: 0px 0px;
   border-top: 1px solid #ddd;
   background: #f5f5f5;
   flex-shrink: 0;
 }
 
 .footer-container {
-  width: 150px;
+  /*width: 150px; */
   position: relative;
 }
 
@@ -482,16 +483,16 @@ const playBeep = () => {
 
 .keypad-btn {
   position: absolute;
-  margin-left: 8px;
+  margin-left: 5px;
   padding: 6px 12px;
   font-size: 14px;
   border: none;
-  background: #f9f9f9;
+  background: #f5f5f5;
   color: #007aff;
   border-radius: 4px;
   box-sizing: border-box;
   top: 1px;
-  right: -95px;
+  right: -91px;
 }
 
 .data-container {
