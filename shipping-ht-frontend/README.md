@@ -1,5 +1,31 @@
-# Vue 3 + TypeScript + Vite
+# フロントエンド導入手順書
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+本プロジェクトのフロントエンドは **Vue.js** を使用して構築されています。  
+ユーザーインターフェースを提供し、バックエンドAPIと通信を行います。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+---
+
+## 📦 必要環境
+
+- npm **v10.9.3以上**
+- バックエンドAPIが起動していること
+
+---
+
+```bash
+# 1. プロジェクトディレクトリへ移動
+cd shipping-ht-frontend
+
+# 2. 必要パッケージをインストール
+npm install
+
+# 3. 環境変数の設定
+# 以下のコマンドを使用して環境変数を設定してください。
+# 例: バックエンドが http://localhost:3000 で動作している場合
+VITE_API_BASE_URL=http://localhost:3000
+
+# 4. 本番ビルドの作成
+npm run build
+
+# 5. 動作確認（プレビュー）
+npm run preview

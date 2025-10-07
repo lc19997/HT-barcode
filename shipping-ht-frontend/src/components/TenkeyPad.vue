@@ -2,11 +2,10 @@
   <div class="tenkey-overlay">
     <div class="tenkey-container">
       <input
-        v-model="displayValue"
+        v-model="localValue"
         type="text"
         class="tenkey-display"
         readonly
-        placeholder=""
       />
       <div class="tenkey-grid">
         <button v-for="num in [7, 8, 9]" :key="num" @click="appendNumber(num)" class="tenkey-btn">
@@ -27,55 +26,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, watch } from "vue";
 
-const displayValue = ref("");
-const emit = defineEmits(["enter", "close"]);
+const props = defineProps({
+  modelValue: { type: String, default: "" }
+});
+const emit = defineEmits(["update:modelValue", "enter", "close"]);
+
+const localValue = ref(props.modelValue);
+
+// sync parent → local
+watch(
+  () => props.modelValue,
+  (val) => {
+    localValue.value = val;
+  }
+);
+
+// helper to update both
+const updateValue = (val) => {
+  localValue.value = val;
+  emit("update:modelValue", val); // sync back to parent
+};
 
 const appendNumber = (num) => {
-  displayValue.value += num;
+  updateValue(localValue.value + num);
 };
 
 const deleteLast = () => {
-  displayValue.value = displayValue.value.slice(0, -1);
+  updateValue(localValue.value.slice(0, -1));
 };
 
 const handleEnter = () => {
-  if (displayValue.value) {
-    emit("enter", displayValue.value);
-    displayValue.value = ""; // Clear after enter
-  }
+  emit("enter", localValue.value);
+  emit("close");
 };
-
-// ✅ Keyboard support
-const handleKeyDown = (e) => {
-  if (/^[0-9]$/.test(e.key)) {
-    appendNumber(e.key);
-  } else if (e.key === "Backspace") {
-    deleteLast();
-  } else if (e.key === "Enter") {
-    handleEnter();
-  } else if (e.key === "Escape") {
-    emit("close");
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeyDown);
-});
-
-defineExpose({
-  close: () => {
-    displayValue.value = "";
-    window.removeEventListener("keydown", handleKeyDown);
-    emit("close");
-  },
-});
 </script>
+
 
 <style scoped>
 .tenkey-overlay {

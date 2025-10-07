@@ -230,7 +230,7 @@ router.post("/add-barcode", async (req, res) => {
     try {
         connection = await getConnection();
 
-        const seqSql = `SELECT SHPPOPTRNNO.NEXTVAL AS SEQ FROM dual`;
+        const seqSql = `SELECT SHPPOPTRNNO_SEQ.NEXTVAL AS SEQ FROM dual`;
         const seqResult = await connection.execute(seqSql);
         const fpoptrnno = seqResult.rows[0][0];
         // 1. Lookup first
@@ -255,7 +255,7 @@ router.post("/add-barcode", async (req, res) => {
         }
 
         const row = lookupResult.rows[0];
-
+        console.log(row);
 
         // 2. Insert with lookup data
         const commonSql = `

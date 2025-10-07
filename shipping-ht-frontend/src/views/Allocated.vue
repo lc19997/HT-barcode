@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" ref ="containerEl">
     <!-- Header -->
     <header class="nav-bar">
       <button class="back-btn" @click="router.push('/orders')">&lt; 出荷No.選択</button>
@@ -44,6 +44,7 @@
       <div class="footer-container">
         <input
           v-model="inputValue"
+          name="inputValue"
           placeholder=""
           class="input-box"
           ref="input"
@@ -57,7 +58,8 @@
     <!-- Tenkey Pad -->
     <TenkeyPad
       v-if="showTenkey"
-      @enter="processBarcode"
+      v-model="inputValue"
+      @enter="handleTenkeyInput"
       @close="showTenkey = false"
     />
   </div>
@@ -98,6 +100,14 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleGlobalBarcodeInput);
 });
+
+const handleTenkeyInput = (value) => {
+  inputValue.value = value;
+  console.log("tenkey:", inputValue.value);
+  //showTenkey.value = false;
+  processBarcode(value);
+  //fetchOrders();   // fetch again when keypad used
+}  
 
 const fetchList = async (barcode, fshpno) => {
 
@@ -171,7 +181,7 @@ const processBarcode = async (raw) => {
   const barcode = String(raw || inputValue.value || "").trim();
   if (barcode.length !== 13) {
     showError("バーコードは13桁である必要があります。");
-    inputValue.value = "";
+    //inputValue.value = "";
     return;
   }
 
@@ -274,12 +284,13 @@ const removeFromBarcodeDataList = (lotNo, subLotNo) => {
 const showError = (msg) => {
   playBeep(); // always beep
   triggerVibration(); // vibration or shake fallback
-  alert(msg);
+  setTimeout(() => alert(msg), 400);
   showTenkey.value = false;
 };
 
 // --- vibration + fallback ---
 const triggerVibration = () => {
+  shakeFallback();
   if ("vibrate" in navigator) {
     const didVibrate = navigator.vibrate([200, 100, 200]);
     console.log("✅ Vibrate triggered:", didVibrate);
@@ -305,11 +316,14 @@ const gotosummary = () => {
 }
 
 // --- shake fallback animation ---
+const containerEl = ref(null);
+
 const shakeFallback = () => {
-  const el = input.value || document.body; // shake the input box if exists
+  const el = containerEl.value || document.body; 
   el.classList.add("shake");
   setTimeout(() => el.classList.remove("shake"), 400);
 };
+
 
 const playBeep = () => {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -354,6 +368,7 @@ const playBeep = () => {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  height: 100vh;
 }
 .nocheck{
   padding-left: 20px;

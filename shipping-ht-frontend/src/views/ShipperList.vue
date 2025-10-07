@@ -124,6 +124,7 @@ const goSummary = () => {
   list-style: none;
   padding: 0;
   margin: 45px 0 0 0;
+  background-color: white;
 }
 
 .shipper-item {
