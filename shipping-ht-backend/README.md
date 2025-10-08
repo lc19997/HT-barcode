@@ -3,14 +3,16 @@
 このプロジェクトのバックエンドは Node.js を使用し、Oracle Database と接続して動作します。以下の手順に従って、クライアントサーバー上でセットアップしてください。
 
 ## 必要環境
-- Node.js v22.19.0 以上  
+
+- npm **v10.9.3以上**
+- Node.js **v22.19.0 以上** 
 - Oracle Database（接続先が有効であること）  
 
 ## セットアップ手順
 
 ```bash
 # 1. プロジェクトディレクトリへ移動
-cd backend
+cd shipping-ht-backend
 
 # 2. 依存パッケージをインストール
 npm install

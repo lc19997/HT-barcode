@@ -6,40 +6,24 @@ router.get('/shippers', async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
+
         const result = await connection.execute(`
             SELECT
                 P.FSECTCD,
                 P.FSECTLN,
                 P.FUPPSECT,
-                P.FSECTSN,
+                S.FSECTSN,
                 P.FEMAILADDR,
                 P.FVALIDDTE,
                 P.FINVALIDDTE,
                 '1' || substr(p.fuppsect, 2, 1) + 1 FFACTSITE
             FROM SECTM P
+            JOIN SECTM S 
+                ON S.FSECTCD = P.FUPPSECT
+            WHERE P.FUPPSECT LIKE '6_8000'
+            AND P.FINVALIDDTE > SYSDATE
+            ORDER BY FSECTCD DESC
         `);
-
-
-        // const result = await connection.execute(`
-        //     SELECT
-        //         P.FSECTCD,
-        //         P.FSECTLN,
-        //         P.FUPPSECT,
-        //         S.FSECTSN,
-        //         P.FEMAILADDR,
-        //         P.FVALIDDTE,
-        //         P.FINVALIDDTE,
-        //         '1' || substr(p.fuppsect, 2, 1) + 1 FFACTSITE
-        //     FROM SECTM P
-        //     JOIN SECTM S 
-        //         ON S.FSECTCD = P.FUPPSECT
-        //     WHERE P.FUPPSECT LIKE '6_8000'
-        //     AND P.FINVALIDDTE > SYSDATE
-        //     ORDER BY FSECTCD DESC
-        // `);
-
-        console.log(result);
-
 
         res.json(result.rows.map(row => ({ name: row[0], code: row[1], factorycode: row[7] })));
     } catch (err) {
@@ -59,37 +43,76 @@ router.get('/orders', async (req, res) => {
 
         // ✅ base SQL
         let sql = `
-            SELECT ZS.*,
-                   0 AS FPOPPCS,
-                   0 AS FPOPQTY
+            SELECT
+                ZS.FSHPNO,
+                ZS.FODRFLG,
+                FODRFLGNM,
+                FSHPODRSTS,
+                FSHPODRSTSSN,
+                ZS.FODRNO,
+                ZS.FODRNO2,
+                ZS.FSLSODRNO,
+                ZS.FSLSODRLINE,
+                ZS.FGRADE,
+                ZS.FFABRICNUM,
+                ZS.FLOTNO,
+                NVL(SUM(
+                        CASE
+                            WHEN SP.FPOPUPDATE IN ('W') THEN 1
+                            WHEN SP.FPOPQTY = 0 THEN -1
+                            ELSE 1
+                        END
+                ),0) AS FPOPPCS,
+                ZS.FSHPODRQTY,
+                NVL(SUM(
+                        CASE
+                            WHEN SP.FPOPUPDATE IN ('W') THEN SP.FPOPQTY
+                            ELSE 0
+                        END
+                ),0) + ZS.FSHPQTY AS FPOPQTY
             FROM ZSHPINS_V ZS
-            WHERE ZS.FINVSITE = :FFACTSITE
-              AND FSHPODRSTS IN ('R')
+            LEFT JOIN SPOPTRNF SP
+                ON SP.FODRNO = ZS.FODRNO
+                AND SP.FODRFLG = ZS.FODRFLG
+                AND SP.FPOPUPDATE IN ('0','2','W')
+                AND SP.FPOPTERMID = 'BARCODE'
+            WHERE
+                (ZS.FINVSITE = :FFACTSITE
+                    OR REGEXP_REPLACE(ZS.FCUSTCD, '^.*A(\d)$', '1\\1') = :FFACTSITE)
+            AND ZS.FSHPODRSTS IN ('R')
+            GROUP BY
+                ZS.FSHPNO,
+                ZS.FODRFLG,
+                FODRFLGNM,
+                FSHPODRSTS,
+                FSHPODRSTSSN,
+                ZS.FODRNO,
+                ZS.FODRNO2,
+                ZS.FSLSODRNO,
+                ZS.FSLSODRLINE,
+                ZS.FGRADE,
+                ZS.FFABRICNUM,
+                ZS.FSHPODRQTY,
+                ZS.FSHPQTY,
+                ZS.FLOTNO
         `;
 
-        // ✅ add filter condition if keyword provided
-        if (keyword && keyword.trim() !== "") {
-            sql += ` AND ZS.FSHPNO LIKE :FILTER`;
-        }
 
         // ✅ bind values
         const binds = { FFACTSITE: shipper };
-        if (keyword && keyword.trim() !== "") {
-            binds.FILTER = `${keyword}%`; // starts with
-        }
 
         const result = await connection.execute(sql, binds);
 
-        console.log("rows:", result.rows.length);
+        console.log("rows:", result);
 
         res.json(result.rows.map(row => ({
             shippingNo: row[0],   // FSHPNO
-            fgrade: row[64],      // check column index mapping
-            ffabricnum: row[65],
-            fpoppcs: row[69],
-            flotno: row[56],
-            fodrflg: row[34],
-            fodrno: row[36]
+            fgrade: row[9],      // check column index mapping
+            ffabricnum: row[10],
+            fpoppcs: row[12],
+            flotno: row[11],
+            fodrflg: row[1],
+            fodrno: row[5]
         })));
 
     } catch (err) {
@@ -224,8 +247,6 @@ router.post("/add-barcode", async (req, res) => {
     const flotno = barcode.substring(0, 10);
     const flotno2 = barcode.substring(10, 13);
 
-
-
     let connection;
     try {
         connection = await getConnection();
@@ -255,7 +276,7 @@ router.post("/add-barcode", async (req, res) => {
         }
 
         const row = lookupResult.rows[0];
-        console.log(row);
+        // console.log(row);
 
         // 2. Insert with lookup data
         const commonSql = `
@@ -435,7 +456,7 @@ router.get("/barcode/get", async (req, res) => {
         const binds = { FODRFLG, FODRNO };
 
         const result = await connection.execute(sql, binds, { outFormat: require("oracledb").OUT_FORMAT_OBJECT });
-        console.log(result.rows);
+        // console.log(result.rows);
 
         res.json({
             count: result.rows.length,

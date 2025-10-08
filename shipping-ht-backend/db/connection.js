@@ -8,13 +8,13 @@ console.log('ORACLE_PASSWORD:', process.env.ORACLE_PASSWORD ? '****' : 'undefine
 console.log('ORACLE_CONNECT:', process.env.ORACLE_CONNECT);
 console.log('ORACLE_CLIENT_PATH:', process.env.ORACLE_CLIENT_PATH);
 
-try {
-    oracledb.initOracleClient({ libDir: process.env.ORACLE_CLIENT_PATH });
-    console.log('Oracle Client initialized successfully with path:', process.env.ORACLE_CLIENT_PATH);
-} catch (initError) {
-    console.error('Failed to initialize Oracle Client:', initError);
-    throw initError; // Re-throw to stop execution on initialization failure
-}
+// try {
+//     oracledb.initOracleClient({ libDir: process.env.ORACLE_CLIENT_PATH });
+//     console.log('Oracle Client initialized successfully with path:', process.env.ORACLE_CLIENT_PATH);
+// } catch (initError) {
+//     console.error('Failed to initialize Oracle Client:', initError);
+//     throw initError; // Re-throw to stop execution on initialization failure
+// }
 
 async function getConnection() {
     let connection;
