@@ -9,15 +9,15 @@
       </div>
     </header>
 
-    <!-- ✅ directly render orders (already filtered by backend) -->
-    <ul v-if="orders.length > 0" class="order-list" >
+    <!-- ✅ render orders filtered in real time on the client -->
+    <ul v-if="filteredOrders.length > 0" class="order-list" >
       <li
-        v-for="(order, index) in orders"
+        v-for="(order, index) in filteredOrders"
         :key="order.shippingNo + '-' + index"
         class="order-row"
         @click="goToAllocated(order)"
       >
-        <span class="col shipping">{{ order.shippingNo }}</span>
+        <span class="col shipping">{{ order.fodrno }}</span>
         <span class="col grade">{{ order.fgrade }}</span>
         <span class="col instructed">{{ order.ffabricnum }}</span>
         <span class="col allocated">{{ order.fpoppcs || "0" }}</span>
@@ -51,14 +51,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import axios from "axios";
 import TenkeyPad from "../components/TenkeyPad.vue";
 
 const filter = ref("");
-const orders = ref([]);           // ✅ only filtered data from backend
+const orders = ref([]);           // all orders fetched from backend
+const filteredOrders = computed(() => {
+  const keyword = (filter.value || "").toString().trim().toLowerCase();
+  if (!keyword) return orders.value;
+
+  return orders.value.filter(order => {
+    const fodrno = (order.fodrno || "").toString().toLowerCase();
+    const fgrade = (order.fgrade || "").toString().toLowerCase();
+    const ffabricnum = (order.ffabricnum || "").toString().toLowerCase();
+    return (
+      fodrno.includes(keyword) ||
+      fgrade.includes(keyword) ||
+      ffabricnum.includes(keyword)
+    );
+  });
+});
 const showTenkey = ref(false);
 const input = ref(null);
 const router = useRouter();
@@ -283,5 +298,11 @@ const goToAllocated = (order) => {
   border-radius: 4px;
   top: 1px;
   right: -91px;
+}
+
+.footer {
+  bottom: env(safe-area-inset-bottom); /* handles iPhone notch */
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: constant(safe-area-inset-bottom); 
 }
 </style>

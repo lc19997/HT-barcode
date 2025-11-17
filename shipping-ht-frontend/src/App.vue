@@ -24,10 +24,8 @@ onMounted(async () => {
   await store.loadShipper(); // wait until shipper is loaded
   console.log(store.selectedShipper.name);
 
-  if (store.selectedShipper.name && router.currentRoute.value.path === '/') {
-    console.log("page tensyokuy");
+
     router.push('/orders');
-  }
 });
 
 </script>
