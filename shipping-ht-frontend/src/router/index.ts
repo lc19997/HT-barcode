@@ -7,7 +7,7 @@ import Summary from "../views/Summary.vue";
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: '/', component: ShipperList }, // First page
+        { path: '/', component: OrderList }, // First page
         { path: '/orders', component: OrderList },
         { path: "/allocated/:shippingNo", component: Allocated, props: true },
         { path: "/summary", component: Summary },
