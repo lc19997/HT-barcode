@@ -35,6 +35,7 @@
           ref="input"
           class="filter-input"
           placeholder=""
+          autofocus
           @keydown.enter.prevent="fetchOrders"  
         />
         <button @click="showTenkey = true" class="keypad-btn">KeyPad</button>
@@ -82,17 +83,58 @@ const store = useAppStore();
 let barcodeBuffer = "";
 let barcodeTimer = null;
 
+// Detect iOS Safari
+const isIOSSafari = () => {
+  const ua = window.navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const isSafari = /safari/.test(ua) && !/chrome|crios|fxios/.test(ua);
+  return isIOS && isSafari;
+};
+
+// Focus input with iOS Safari workaround
+const focusInput = () => {
+  if (input.value) {
+    // For iOS Safari, we need to use a workaround
+    if (isIOSSafari()) {
+      // Try to focus after a small delay (may work if user has interacted)
+      setTimeout(() => {
+        if (input.value) {
+          input.value.focus();
+        }
+      }, 100);
+    } else {
+      // For other browsers, focus immediately
+      input.value.focus();
+    }
+  }
+};
+
 onMounted(async () => {
   if (!store.selectedShipper) router.push("/");
-
-  // Focus input
-  input.value.focus();
 
   // ✅ fetch first page (all orders or filtered by empty keyword)
   await fetchOrders();
 
   if (router.currentRoute.value.name === "OrderList") {
     window.addEventListener("keydown", handleBarcodeInput);
+  }
+  
+  // Focus input (with iOS Safari workaround)
+  focusInput();
+  
+  // iOS Safari workaround: Focus on first touch/interaction
+  if (isIOSSafari()) {
+    const focusOnTouch = () => {
+      if (input.value && document.activeElement !== input.value) {
+        input.value.focus();
+      }
+    };
+    
+    // Listen for touch events to focus input
+    document.addEventListener("touchstart", focusOnTouch, { once: true, passive: true });
+    document.addEventListener("touchend", focusOnTouch, { once: true, passive: true });
+    // Also try on click as fallback
+    document.addEventListener("click", focusOnTouch, { once: true, passive: true });
   }
 });
 
@@ -298,11 +340,5 @@ const goToAllocated = (order) => {
   border-radius: 4px;
   top: 1px;
   right: -91px;
-}
-
-.footer {
-  bottom: env(safe-area-inset-bottom); /* handles iPhone notch */
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-bottom: constant(safe-area-inset-bottom); 
 }
 </style>
